@@ -28,7 +28,8 @@ export default function HRLoginPage() {
       return
     }
 
-    router.replace('/hr/dashboard')
+    // Hard navigation so the server middleware picks up the new session cookie
+    window.location.href = '/hr/dashboard'
   }
 
   return (

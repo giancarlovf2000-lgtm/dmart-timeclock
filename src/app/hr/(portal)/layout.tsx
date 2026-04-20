@@ -17,7 +17,7 @@ async function getCurrentPeriodLabel() {
   }
 }
 
-export default async function HRLayout({ children }: { children: React.ReactNode }) {
+export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const currentPeriodLabel = await getCurrentPeriodLabel()
 
   return (

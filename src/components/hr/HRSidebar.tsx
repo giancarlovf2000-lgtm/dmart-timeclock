@@ -23,7 +23,7 @@ export function HRSidebar({ currentPeriodLabel }: Props) {
 
   async function handleLogout() {
     await supabase.auth.signOut()
-    router.replace('/hr/login')
+    window.location.href = '/hr/login'
   }
 
   return (
