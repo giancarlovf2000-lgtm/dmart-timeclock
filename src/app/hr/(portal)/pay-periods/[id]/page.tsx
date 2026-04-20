@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, use } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ExportButton } from '@/components/hr/ExportButton'
 import { minutesToHours, minutesToHoursLabel } from '@/lib/pay-periods'
@@ -23,8 +23,8 @@ interface EmployeeHours {
   session_count: number
 }
 
-export default function PayPeriodDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function PayPeriodDetailPage({ params }: { params: { id: string } }) {
+  const id = params.id
   const [period, setPeriod] = useState<PayPeriod | null>(null)
   const [employees, setEmployees] = useState<EmployeeHours[]>([])
   const [loading, setLoading] = useState(true)
@@ -33,8 +33,8 @@ export default function PayPeriodDetailPage({ params }: { params: Promise<{ id: 
     fetch(`/api/hr/pay-periods/${id}`)
       .then(r => r.json())
       .then(data => {
-        setPeriod(data.period)
-        setEmployees(data.employees)
+        setPeriod(data.period ?? null)
+        setEmployees(Array.isArray(data.employees) ? data.employees : [])
         setLoading(false)
       })
   }, [id])

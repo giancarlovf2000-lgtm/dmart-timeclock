@@ -21,6 +21,7 @@ interface PayPeriod {
 export default function PayPeriodsPage() {
   const [periods, setPeriods] = useState<PayPeriod[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [startDate, setStartDate] = useState('')
   const [periodType, setPeriodType] = useState<'biweekly' | 'semi_monthly'>('biweekly')
@@ -30,18 +31,28 @@ export default function PayPeriodsPage() {
   const [previewLabel, setPreviewLabel] = useState('')
 
   async function fetchPeriods() {
-    const res = await fetch('/api/hr/pay-periods')
-    const data = await res.json()
-    setPeriods(data)
-    setLoading(false)
+    try {
+      const res = await fetch('/api/hr/pay-periods')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error cargando períodos')
+      setPeriods(Array.isArray(data) ? data : [])
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error de conexión')
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { fetchPeriods() }, [])
 
   useEffect(() => {
     if (!startDate) { setPreviewLabel(''); return }
-    const { start, end } = getNextPeriodDates(new Date(startDate + 'T00:00:00Z'), periodType)
-    setPreviewLabel(formatPeriodLabel(start, end))
+    try {
+      const { start, end } = getNextPeriodDates(new Date(startDate + 'T00:00:00Z'), periodType)
+      setPreviewLabel(formatPeriodLabel(start, end))
+    } catch {
+      setPreviewLabel('')
+    }
   }, [startDate, periodType])
 
   async function handleCreate(e: React.FormEvent) {
@@ -50,29 +61,45 @@ export default function PayPeriodsPage() {
     setSubmitting(true)
     setFormError('')
 
-    const res = await fetch('/api/hr/pay-periods', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ start_date: startDate, period_type: periodType, set_current: setCurrent }),
-    })
-    const data = await res.json()
-    setSubmitting(false)
+    try {
+      const res = await fetch('/api/hr/pay-periods', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ start_date: startDate, period_type: periodType, set_current: setCurrent }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setFormError(data.error || 'Error creando período'); return }
 
-    if (!res.ok) { setFormError(data.error); return }
-
-    setShowForm(false)
-    setStartDate('')
-    setSetCurrent(false)
-    fetchPeriods()
+      setShowForm(false)
+      setStartDate('')
+      setSetCurrent(false)
+      fetchPeriods()
+    } catch {
+      setFormError('Error de conexión')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   async function markCurrent(periodId: string) {
-    await fetch(`/api/hr/pay-periods/${periodId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ is_current: true }),
-    })
-    fetchPeriods()
+    try {
+      await fetch(`/api/hr/pay-periods/${periodId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_current: true }),
+      })
+      fetchPeriods()
+    } catch {
+      // silently retry on next load
+    }
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 max-w-3xl mx-auto">
+        <div className="bg-red-900/20 border border-red-800 rounded-xl p-4 text-red-400">{error}</div>
+      </div>
+    )
   }
 
   return (
@@ -96,9 +123,9 @@ export default function PayPeriodsPage() {
                 <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700">
-                  <SelectItem value="biweekly" className="text-white">Bi-semanal (14 días)</SelectItem>
-                  <SelectItem value="semi_monthly" className="text-white">Quincenal (1-15 / 16-fin)</SelectItem>
+                <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                  <SelectItem value="biweekly" className="text-white focus:bg-zinc-700 focus:text-white">Bi-semanal (14 días)</SelectItem>
+                  <SelectItem value="semi_monthly" className="text-white focus:bg-zinc-700 focus:text-white">Quincenal (1-15 / 16-fin)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -149,7 +176,10 @@ export default function PayPeriodsPage() {
         {loading ? (
           <div className="py-10 text-center text-zinc-500">Cargando...</div>
         ) : periods.length === 0 ? (
-          <div className="py-10 text-center text-zinc-500">No hay períodos creados</div>
+          <div className="py-10 text-center space-y-2">
+            <p className="text-zinc-500">No hay períodos creados</p>
+            <p className="text-zinc-600 text-sm">Crea un período para comenzar a registrar horas</p>
+          </div>
         ) : (
           <div className="divide-y divide-zinc-800">
             {periods.map(period => (
@@ -157,7 +187,7 @@ export default function PayPeriodsPage() {
                 <Calendar size={18} className={period.is_current ? 'text-blue-400' : 'text-zinc-500'} />
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Link href={`/hr/pay-periods/${period.id}`} className="text-white font-medium hover:text-blue-300 transition-colors">
                       {period.label}
                     </Link>
@@ -170,7 +200,7 @@ export default function PayPeriodsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   {!period.is_current && !period.is_closed && (
                     <button
                       onClick={() => markCurrent(period.id)}

@@ -36,7 +36,10 @@ export default function DashboardPage() {
   useEffect(() => {
     fetch('/api/hr/dashboard')
       .then(r => r.json())
-      .then(d => setData(d))
+      .then(d => {
+        if (d && typeof d === 'object' && !d.error) setData(d)
+      })
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
@@ -78,21 +81,23 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Employee hours */}
-      {data?.current_period && (
+      {/* Employee hours — show regardless of period */}
+      {(data?.employee_hours?.length ?? 0) > 0 && (
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
           <div className="px-5 py-4 border-b border-zinc-800 flex items-center gap-2">
             <Clock size={16} className="text-zinc-400" />
-            <h3 className="text-white font-semibold">Horas por empleado — período actual</h3>
+            <h3 className="text-white font-semibold">
+              {data?.current_period ? `Horas por empleado — ${data.current_period.label}` : 'Ponches registrados'}
+            </h3>
           </div>
 
-          {data.employee_hours.length === 0 ? (
+          {(data?.employee_hours?.length ?? 0) === 0 ? (
             <div className="px-5 py-8 text-center text-zinc-500">
               No hay ponches registrados en este período
             </div>
           ) : (
             <div className="divide-y divide-zinc-800">
-              {data.employee_hours.map(emp => (
+              {(data?.employee_hours ?? []).map(emp => (
                 <Link
                   key={emp.employee_id}
                   href={`/hr/employees/${emp.employee_id}`}
@@ -128,11 +133,11 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {data.employee_hours.length > 0 && (
+          {(data?.employee_hours?.length ?? 0) > 0 && (
             <div className="px-5 py-3 bg-zinc-800/50 border-t border-zinc-700 flex justify-between items-center">
               <span className="text-zinc-400 text-sm">Total acumulado</span>
               <span className="text-white font-bold">
-                {minutesToHours(data.employee_hours.reduce((s, e) => s + e.total_minutes, 0))} hrs
+                {minutesToHours((data?.employee_hours ?? []).reduce((s, e) => s + e.total_minutes, 0))} hrs
               </span>
             </div>
           )}

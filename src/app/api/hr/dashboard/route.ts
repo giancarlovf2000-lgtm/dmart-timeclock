@@ -8,14 +8,12 @@ export async function GET(request: NextRequest) {
 
   const supabase = createServiceClient()
 
-  // Get current pay period
   const { data: currentPeriod } = await supabase
     .from('pay_periods')
     .select('*')
     .eq('is_current', true)
     .single()
 
-  // Get past periods
   const { data: pastPeriods } = await supabase
     .from('pay_periods')
     .select('id, label, start_date, end_date, is_closed')
@@ -23,28 +21,33 @@ export async function GET(request: NextRequest) {
     .order('start_date', { ascending: false })
     .limit(20)
 
-  if (!currentPeriod) {
-    return NextResponse.json({
-      current_period: null,
-      past_periods: pastPeriods || [],
-      employee_hours: [],
-    })
-  }
-
-  // Get hours for current period
-  const { data: sessions } = await supabase
+  // Query sessions: if current period exists use date range, else show all recent
+  let sessionsQuery = supabase
     .from('work_sessions')
-    .select('employee_id, minutes_worked, employees(id, full_name, employee_code, is_active)')
-    .eq('pay_period_id', currentPeriod.id)
+    .select('employee_id, minutes_worked, clock_out_punch_id, employees(id, full_name, employee_code, is_active)')
     .not('clock_out_punch_id', 'is', null)
 
-  // Check for open sessions (clocked in but no clock out)
-  const { data: openSessions } = await supabase
+  if (currentPeriod) {
+    sessionsQuery = sessionsQuery
+      .gte('work_date', currentPeriod.start_date)
+      .lte('work_date', currentPeriod.end_date)
+  }
+
+  const { data: sessions } = await sessionsQuery
+
+  // Open sessions (clocked in but no clock out)
+  let openQuery = supabase
     .from('work_sessions')
     .select('employee_id, employees(full_name, employee_code)')
-    .eq('pay_period_id', currentPeriod.id)
     .is('clock_out_punch_id', null)
 
+  if (currentPeriod) {
+    openQuery = openQuery
+      .gte('work_date', currentPeriod.start_date)
+      .lte('work_date', currentPeriod.end_date)
+  }
+
+  const { data: openSessions } = await openQuery
   const openEmployeeIds = new Set((openSessions || []).map(s => s.employee_id))
 
   const employeeMap = new Map<string, {
@@ -76,7 +79,6 @@ export async function GET(request: NextRequest) {
     entry.session_count += 1
   }
 
-  // Include employees with open sessions even if no completed sessions
   for (const openSession of openSessions || []) {
     const emp = openSession.employees as unknown as { full_name: string; employee_code: string } | null
     if (!emp || employeeMap.has(openSession.employee_id)) continue
@@ -92,7 +94,7 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({
-    current_period: currentPeriod,
+    current_period: currentPeriod ?? null,
     past_periods: pastPeriods || [],
     employee_hours: Array.from(employeeMap.values()).sort((a, b) => a.full_name.localeCompare(b.full_name)),
   })
