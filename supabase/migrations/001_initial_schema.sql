@@ -1,12 +1,10 @@
 -- D'mart Institute Time Clock - Schema v1.0
--- Run once in Supabase SQL Editor
 
-create extension if not exists "uuid-ossp";
 create extension if not exists "btree_gist";
 
 -- LOCATIONS
 create table if not exists public.locations (
-  id         uuid primary key default uuid_generate_v4(),
+  id         uuid primary key default gen_random_uuid(),
   name       text not null,
   kiosk_code text unique not null,
   is_active  boolean not null default true,
@@ -15,7 +13,7 @@ create table if not exists public.locations (
 
 -- EMPLOYEES
 create table if not exists public.employees (
-  id                      uuid primary key default uuid_generate_v4(),
+  id                      uuid primary key default gen_random_uuid(),
   employee_code           text unique not null,
   full_name               text not null,
   quickbooks_display_name text,
@@ -27,7 +25,7 @@ create table if not exists public.employees (
 
 -- PAY PERIODS
 create table if not exists public.pay_periods (
-  id           uuid primary key default uuid_generate_v4(),
+  id           uuid primary key default gen_random_uuid(),
   label        text not null,
   period_type  text not null check (period_type in ('biweekly', 'semi_monthly')),
   start_date   date not null,
@@ -46,19 +44,19 @@ create unique index if not exists idx_pay_periods_current
 
 -- PUNCH RECORDS
 create table if not exists public.punch_records (
-  id          uuid primary key default uuid_generate_v4(),
-  employee_id uuid not null references public.employees(id) on delete restrict,
-  location_id uuid references public.locations(id),
-  punch_type  text not null check (punch_type in ('CLOCK_IN', 'CLOCK_OUT')),
-  punched_at  timestamptz not null default now(),
-  photo_path  text,
+  id              uuid primary key default gen_random_uuid(),
+  employee_id     uuid not null references public.employees(id) on delete restrict,
+  location_id     uuid references public.locations(id),
+  punch_type      text not null check (punch_type in ('CLOCK_IN', 'CLOCK_OUT')),
+  punched_at      timestamptz not null default now(),
+  photo_path      text,
   device_location text,
-  created_at  timestamptz not null default now()
+  created_at      timestamptz not null default now()
 );
 
 -- WORK SESSIONS (paired IN+OUT)
 create table if not exists public.work_sessions (
-  id                  uuid primary key default uuid_generate_v4(),
+  id                  uuid primary key default gen_random_uuid(),
   employee_id         uuid not null references public.employees(id) on delete restrict,
   pay_period_id       uuid references public.pay_periods(id),
   clock_in_punch_id   uuid not null references public.punch_records(id),
@@ -71,7 +69,7 @@ create table if not exists public.work_sessions (
 
 -- HR USERS
 create table if not exists public.hr_users (
-  id         uuid primary key default uuid_generate_v4(),
+  id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null unique references auth.users(id) on delete cascade,
   full_name  text,
   is_active  boolean not null default true,
@@ -122,9 +120,3 @@ insert into public.locations (name, kiosk_code) values
   ('Barranquitas',          'barranquitas'),
   ('Oficinas Corporativas', 'oficinas-corporativas')
 on conflict (kiosk_code) do nothing;
-
--- NOTE: After running this schema:
--- 1. Create a private Storage bucket named "punch-photos"
--- 2. Create your first HR user via Supabase Auth (email/password)
--- 3. Insert that user's auth UID into hr_users table:
---    INSERT INTO hr_users (user_id, full_name) VALUES ('auth-uid-here', 'Admin HR');
