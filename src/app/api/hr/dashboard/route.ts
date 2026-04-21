@@ -89,6 +89,7 @@ export async function GET(request: NextRequest) {
       full_name: emp.full_name,
       employee_code: emp.employee_code,
       is_active: true,
+      pay_type: 'regular',
       total_minutes: 0,
       session_count: 0,
       has_open_session: true,
