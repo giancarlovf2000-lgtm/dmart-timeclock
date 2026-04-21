@@ -20,15 +20,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   // Get employee hours for this period
   const { data: sessions } = await supabase
     .from('work_sessions')
-    .select('employee_id, minutes_worked, work_date, employees(full_name, employee_code)')
+    .select('employee_id, minutes_worked, work_date, employees(full_name, employee_code, pay_type)')
     .eq('pay_period_id', id)
     .not('clock_out_punch_id', 'is', null)
 
   // Aggregate by employee
-  const employeeMap = new Map<string, { employee_id: string; full_name: string; employee_code: string; total_minutes: number; session_count: number }>()
+  const employeeMap = new Map<string, { employee_id: string; full_name: string; employee_code: string; pay_type: string; total_minutes: number; session_count: number }>()
 
   for (const session of sessions || []) {
-    const emp = session.employees as unknown as { full_name: string; employee_code: string } | null
+    const emp = session.employees as unknown as { full_name: string; employee_code: string; pay_type: string } | null
     if (!emp) continue
     const key = session.employee_id
     if (!employeeMap.has(key)) {
@@ -36,6 +36,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         employee_id: key,
         full_name: emp.full_name,
         employee_code: emp.employee_code,
+        pay_type: emp.pay_type ?? 'regular',
         total_minutes: 0,
         session_count: 0,
       })
@@ -45,10 +46,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     entry.session_count += 1
   }
 
-  return NextResponse.json({
-    period,
-    employees: Array.from(employeeMap.values()).sort((a, b) => a.full_name.localeCompare(b.full_name)),
-  })
+  // For exempt employees replace actual minutes with 8h × completed sessions
+  const employees = Array.from(employeeMap.values())
+    .map(e => ({
+      ...e,
+      total_minutes: e.pay_type === 'exempt' ? e.session_count * 480 : e.total_minutes,
+    }))
+    .sort((a, b) => a.full_name.localeCompare(b.full_name))
+
+  return NextResponse.json({ period, employees })
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

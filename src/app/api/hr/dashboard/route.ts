@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   // Query sessions: if current period exists use date range, else show all recent
   let sessionsQuery = supabase
     .from('work_sessions')
-    .select('employee_id, minutes_worked, clock_out_punch_id, employees(id, full_name, employee_code, is_active)')
+    .select('employee_id, minutes_worked, clock_out_punch_id, employees(id, full_name, employee_code, is_active, pay_type)')
     .not('clock_out_punch_id', 'is', null)
 
   if (currentPeriod) {
@@ -55,13 +55,14 @@ export async function GET(request: NextRequest) {
     full_name: string
     employee_code: string
     is_active: boolean
+    pay_type: string
     total_minutes: number
     session_count: number
     has_open_session: boolean
   }>()
 
   for (const session of sessions || []) {
-    const emp = session.employees as unknown as { id: string; full_name: string; employee_code: string; is_active: boolean } | null
+    const emp = session.employees as unknown as { id: string; full_name: string; employee_code: string; is_active: boolean; pay_type: string } | null
     if (!emp) continue
     if (!employeeMap.has(session.employee_id)) {
       employeeMap.set(session.employee_id, {
@@ -69,6 +70,7 @@ export async function GET(request: NextRequest) {
         full_name: emp.full_name,
         employee_code: emp.employee_code,
         is_active: emp.is_active,
+        pay_type: emp.pay_type ?? 'regular',
         total_minutes: 0,
         session_count: 0,
         has_open_session: openEmployeeIds.has(session.employee_id),
@@ -93,9 +95,16 @@ export async function GET(request: NextRequest) {
     })
   }
 
+  const employee_hours = Array.from(employeeMap.values())
+    .map(e => ({
+      ...e,
+      total_minutes: e.pay_type === 'exempt' ? e.session_count * 480 : e.total_minutes,
+    }))
+    .sort((a, b) => a.full_name.localeCompare(b.full_name))
+
   return NextResponse.json({
     current_period: currentPeriod ?? null,
     past_periods: pastPeriods || [],
-    employee_hours: Array.from(employeeMap.values()).sort((a, b) => a.full_name.localeCompare(b.full_name)),
+    employee_hours,
   })
 }

@@ -17,7 +17,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const { data: employee, error: empError } = await supabase
     .from('employees')
-    .select('id, hire_date, applicable_law, initial_vacation_hours, initial_sick_hours, created_at')
+    .select('id, hire_date, applicable_law, initial_vacation_hours, initial_sick_hours, pay_type, created_at')
     .eq('id', id)
     .single()
 
@@ -31,6 +31,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const hireDate = new Date(employee.hire_date + 'T00:00:00')
   const applicableLaw: ApplicableLaw = (employee.applicable_law as ApplicableLaw) ?? assignLaw(hireDate)
+  const isExempt = employee.pay_type === 'exempt'
 
   const { data: sessions } = await supabase
     .from('work_sessions')
@@ -39,11 +40,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .not('clock_out_punch_id', 'is', null)
     .order('work_date', { ascending: true })
 
-  // Aggregate minutes by calendar month
-  const monthMap = new Map<string, number>()
+  // Aggregate minutes and session count by calendar month
+  const monthMinutesMap = new Map<string, number>()
+  const monthSessionMap = new Map<string, number>()
   for (const s of sessions ?? []) {
     const key = (s.work_date as string).slice(0, 7)
-    monthMap.set(key, (monthMap.get(key) ?? 0) + s.minutes_worked)
+    monthMinutesMap.set(key, (monthMinutesMap.get(key) ?? 0) + s.minutes_worked)
+    monthSessionMap.set(key, (monthSessionMap.get(key) ?? 0) + 1)
   }
 
   const today = new Date()
@@ -61,7 +64,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const monthResults = months.map(monthYear => {
     const key = monthYear.toISOString().slice(0, 7)
-    const minutesWorked = monthMap.get(key) ?? 0
+    // Exempt employees get 8h (480 min) per completed session credited for accrual
+    const minutesWorked = isExempt
+      ? (monthSessionMap.get(key) ?? 0) * 480
+      : (monthMinutesMap.get(key) ?? 0)
     const isCurrentMonth = monthYear.getTime() === currentMonthStart.getTime()
 
     const result = calculateMonthAccrual(
@@ -80,6 +86,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   return NextResponse.json({
     hire_date: employee.hire_date,
     applicable_law: applicableLaw,
+    pay_type: employee.pay_type ?? 'regular',
     initial_vacation_hours: parseFloat(employee.initial_vacation_hours) || 0,
     initial_sick_hours: parseFloat(employee.initial_sick_hours) || 0,
     total_vacation_hours: Math.round(totalVacationHours * 100) / 100,

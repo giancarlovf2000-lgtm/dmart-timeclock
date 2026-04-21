@@ -15,6 +15,7 @@ interface Employee {
   is_active: boolean
   hire_date: string | null
   applicable_law: 'ley_vieja' | 'ley_nueva' | null
+  pay_type: 'regular' | 'exempt' | null
   created_at: string
 }
 
@@ -118,6 +119,11 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
                 <span className={`text-xs px-2 py-0.5 rounded-full ${employee.is_active ? 'bg-emerald-900/40 text-emerald-400' : 'bg-zinc-800 text-zinc-500'}`}>
                   {employee.is_active ? 'Activo' : 'Inactivo'}
                 </span>
+                {employee.pay_type === 'exempt' && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-blue-900/40 text-blue-400">
+                    Exento
+                  </span>
+                )}
                 {employee.hire_date && (
                   <span className="text-zinc-400 text-xs">
                     Contratado: {new Date(employee.hire_date + 'T00:00:00').toLocaleDateString('es-PR')}
@@ -237,7 +243,8 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
             {[...sessions].reverse().map(({ clockIn, clockOut }, idx) => {
               const inDate = new Date(clockIn.punched_at)
               const outDate = clockOut ? new Date(clockOut.punched_at) : null
-              const minutes = outDate ? Math.round((outDate.getTime() - inDate.getTime()) / 60000) : null
+              const actualMinutes = outDate ? Math.round((outDate.getTime() - inDate.getTime()) / 60000) : null
+              const minutes = employee.pay_type === 'exempt' && actualMinutes !== null ? 480 : actualMinutes
 
               return (
                 <div key={idx} className="px-5 py-4 space-y-3">
@@ -246,7 +253,12 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
                       {inDate.toLocaleDateString('es-PR', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
                     </span>
                     {minutes !== null ? (
-                      <span className="text-white font-semibold">{minutesToHoursLabel(minutes)}</span>
+                      <div className="text-right">
+                        <span className="text-white font-semibold">{minutesToHoursLabel(minutes)}</span>
+                        {employee.pay_type === 'exempt' && actualMinutes !== null && actualMinutes !== 480 && (
+                          <p className="text-zinc-500 text-xs">{minutesToHoursLabel(actualMinutes)} real</p>
+                        )}
+                      </div>
                     ) : (
                       <span className="text-amber-400 text-xs flex items-center gap-1">
                         <AlertTriangle size={12} />

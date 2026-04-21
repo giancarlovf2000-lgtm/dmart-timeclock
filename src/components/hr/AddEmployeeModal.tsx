@@ -21,6 +21,7 @@ export function AddEmployeeModal({ open, onClose, onAdded }: Props) {
   const [lawOverride, setLawOverride] = useState<'auto' | ApplicableLaw>('auto')
   const [initialVacation, setInitialVacation] = useState('')
   const [initialSick, setInitialSick] = useState('')
+  const [payType, setPayType] = useState<'regular' | 'exempt'>('regular')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [created, setCreated] = useState<{ employee_code: string; full_name: string } | null>(null)
@@ -50,6 +51,7 @@ export function AddEmployeeModal({ open, onClose, onAdded }: Props) {
           applicable_law: effectiveLaw || null,
           initial_vacation_hours: initialVacation || 0,
           initial_sick_hours: initialSick || 0,
+          pay_type: payType,
         }),
       })
       const data = await res.json()
@@ -81,6 +83,7 @@ export function AddEmployeeModal({ open, onClose, onAdded }: Props) {
     setLawOverride('auto')
     setInitialVacation('')
     setInitialSick('')
+    setPayType('regular')
     setError('')
     setCreated(null)
     setCopied(false)
@@ -134,6 +137,37 @@ export function AddEmployeeModal({ open, onClose, onAdded }: Props) {
                 placeholder="Opcional"
                 className="bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500"
               />
+            </div>
+
+            <div>
+              <label className="text-sm text-zinc-400 block mb-2">Tipo de pago</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPayType('regular')}
+                  className={`py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
+                    payType === 'regular'
+                      ? 'bg-zinc-700 border-zinc-500 text-white'
+                      : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-600'
+                  }`}
+                >
+                  Regular
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPayType('exempt')}
+                  className={`py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
+                    payType === 'exempt'
+                      ? 'bg-blue-900/40 border-blue-600 text-blue-300'
+                      : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-600'
+                  }`}
+                >
+                  Exento
+                </button>
+              </div>
+              {payType === 'exempt' && (
+                <p className="text-zinc-500 text-xs mt-1.5">Empleado asalariado exento — se acreditan 8 horas por día trabajado</p>
+              )}
             </div>
 
             <div>

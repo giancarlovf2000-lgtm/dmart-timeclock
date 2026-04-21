@@ -4,6 +4,7 @@ interface EmployeeSummary {
   employee_name: string
   quickbooks_display_name: string | null
   total_minutes: number
+  pay_type?: string
 }
 
 interface PeriodInfo {
@@ -23,7 +24,8 @@ export function buildQuickBooksCSV(employees: EmployeeSummary[], period: PeriodI
     .map(e => {
       const name = (e.quickbooks_display_name || e.employee_name).replace(/"/g, '""')
       const hours = (e.total_minutes / 60).toFixed(2)
-      return `"${name}",${periodStart},${periodEnd},${hours},Regular`
+      const payTypeLabel = e.pay_type === 'exempt' ? 'Exempt' : 'Regular'
+      return `"${name}",${periodStart},${periodEnd},${hours},${payTypeLabel}`
     })
 
   return [header, ...rows].join('\r\n')
