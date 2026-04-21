@@ -19,6 +19,8 @@ export function AddEmployeeModal({ open, onClose, onAdded }: Props) {
   const [department, setDepartment] = useState('')
   const [hireDate, setHireDate] = useState('')
   const [lawOverride, setLawOverride] = useState<'auto' | ApplicableLaw>('auto')
+  const [initialVacation, setInitialVacation] = useState('')
+  const [initialSick, setInitialSick] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [created, setCreated] = useState<{ employee_code: string; full_name: string } | null>(null)
@@ -46,6 +48,8 @@ export function AddEmployeeModal({ open, onClose, onAdded }: Props) {
           department: department.trim(),
           hire_date: hireDate || null,
           applicable_law: effectiveLaw || null,
+          initial_vacation_hours: initialVacation || 0,
+          initial_sick_hours: initialSick || 0,
         }),
       })
       const data = await res.json()
@@ -75,6 +79,8 @@ export function AddEmployeeModal({ open, onClose, onAdded }: Props) {
     setDepartment('')
     setHireDate('')
     setLawOverride('auto')
+    setInitialVacation('')
+    setInitialSick('')
     setError('')
     setCreated(null)
     setCopied(false)
@@ -138,6 +144,33 @@ export function AddEmployeeModal({ open, onClose, onAdded }: Props) {
                 onChange={e => { setHireDate(e.target.value); setLawOverride('auto') }}
                 className="bg-zinc-800 border-zinc-700 text-white"
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm text-zinc-400 block mb-1">Vacaciones acumuladas (hrs)</label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={initialVacation}
+                  onChange={e => setInitialVacation(e.target.value)}
+                  placeholder="0"
+                  className="bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-zinc-400 block mb-1">Enfermedad acumulada (hrs)</label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={initialSick}
+                  onChange={e => setInitialSick(e.target.value)}
+                  placeholder="0"
+                  className="bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500"
+                />
+              </div>
             </div>
 
             {/* Law preview — shown once hire date is entered */}

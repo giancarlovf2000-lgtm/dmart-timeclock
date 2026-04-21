@@ -11,7 +11,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const { data, error } = await supabase
     .from('employees')
-    .select('id, employee_code, full_name, quickbooks_display_name, department, is_active, hire_date, applicable_law, created_at')
+    .select('id, employee_code, full_name, quickbooks_display_name, department, is_active, hire_date, applicable_law, initial_vacation_hours, initial_sick_hours, created_at')
     .eq('id', id)
     .single()
 
@@ -40,7 +40,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     .from('employees')
     .update(updates)
     .eq('id', id)
-    .select('id, employee_code, full_name, quickbooks_display_name, department, is_active, hire_date, applicable_law, created_at')
+    .select('id, employee_code, full_name, quickbooks_display_name, department, is_active, hire_date, applicable_law, initial_vacation_hours, initial_sick_hours, created_at')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

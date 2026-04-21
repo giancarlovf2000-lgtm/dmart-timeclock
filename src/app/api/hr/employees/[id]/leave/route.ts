@@ -17,7 +17,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const { data: employee, error: empError } = await supabase
     .from('employees')
-    .select('id, hire_date, applicable_law')
+    .select('id, hire_date, applicable_law, initial_vacation_hours, initial_sick_hours, created_at')
     .eq('id', id)
     .single()
 
@@ -48,12 +48,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const today = new Date()
   const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1)
-  const hireMonthStart = new Date(hireDate.getFullYear(), hireDate.getMonth(), 1)
 
-  const months = enumerateMonths(hireMonthStart, currentMonthStart)
+  // Start tracking from when the employee was added to this system, not hire date
+  const systemEntryDate = new Date(employee.created_at)
+  const systemMonthStart = new Date(systemEntryDate.getFullYear(), systemEntryDate.getMonth(), 1)
 
-  let totalVacationHours = 0
-  let totalSickHours = 0
+  const months = enumerateMonths(systemMonthStart, currentMonthStart)
+
+  // Carry over any hours the employee had accumulated before joining this system
+  let totalVacationHours = parseFloat(employee.initial_vacation_hours) || 0
+  let totalSickHours = parseFloat(employee.initial_sick_hours) || 0
 
   const monthResults = months.map(monthYear => {
     const key = monthYear.toISOString().slice(0, 7)
@@ -76,6 +80,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   return NextResponse.json({
     hire_date: employee.hire_date,
     applicable_law: applicableLaw,
+    initial_vacation_hours: parseFloat(employee.initial_vacation_hours) || 0,
+    initial_sick_hours: parseFloat(employee.initial_sick_hours) || 0,
     total_vacation_hours: Math.round(totalVacationHours * 100) / 100,
     total_sick_hours: Math.round(totalSickHours * 100) / 100,
     months: monthResults,

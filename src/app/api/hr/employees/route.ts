@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   const auth = await requireHR()
   if (auth instanceof NextResponse) return auth
 
-  const { full_name, department, quickbooks_display_name, hire_date, applicable_law } = await request.json()
+  const { full_name, department, quickbooks_display_name, hire_date, applicable_law, initial_vacation_hours, initial_sick_hours } = await request.json()
 
   if (!full_name?.trim()) {
     return NextResponse.json({ error: 'El nombre es requerido' }, { status: 400 })
@@ -58,8 +58,10 @@ export async function POST(request: NextRequest) {
       department: department?.trim() || null,
       hire_date: hire_date || null,
       applicable_law: applicable_law || null,
+      initial_vacation_hours: parseFloat(initial_vacation_hours) || 0,
+      initial_sick_hours: parseFloat(initial_sick_hours) || 0,
     })
-    .select('id, employee_code, full_name, quickbooks_display_name, department, is_active, hire_date, applicable_law, created_at')
+    .select('id, employee_code, full_name, quickbooks_display_name, department, is_active, hire_date, applicable_law, initial_vacation_hours, initial_sick_hours, created_at')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
