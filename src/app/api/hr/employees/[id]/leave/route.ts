@@ -66,8 +66,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     )
 
     if (!isCurrentMonth) {
-      totalVacationHours += result.vacationHours
-      totalSickHours += result.sickHours
+      totalVacationHours += result.vacation_hours
+      totalSickHours += result.sick_hours
     }
 
     return result
