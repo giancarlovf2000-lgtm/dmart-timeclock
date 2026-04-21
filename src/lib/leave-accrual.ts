@@ -30,13 +30,13 @@ export interface MonthAccrualInput {
 }
 
 export interface MonthAccrualResult {
-  monthYear: string  // 'YYYY-MM-DD'
-  hoursWorked: number
+  month_year: string  // 'YYYY-MM-DD'
+  hours_worked: number
   qualified: boolean
-  vacationHours: number
-  sickHours: number
-  yearsOfService: number
-  isCurrentMonth: boolean
+  vacation_hours: number
+  sick_hours: number
+  years_of_service: number
+  is_current_month: boolean
 }
 
 export function calculateMonthAccrual(
@@ -69,13 +69,13 @@ export function calculateMonthAccrual(
   }
 
   return {
-    monthYear: input.monthYear.toISOString().slice(0, 10),
-    hoursWorked: Math.round(hoursWorked * 100) / 100,
+    month_year: input.monthYear.toISOString().slice(0, 10),
+    hours_worked: Math.round(hoursWorked * 100) / 100,
     qualified,
-    vacationHours,
-    sickHours,
-    yearsOfService: Math.round(yearsOfService * 100) / 100,
-    isCurrentMonth,
+    vacation_hours: vacationHours,
+    sick_hours: sickHours,
+    years_of_service: Math.round(yearsOfService * 100) / 100,
+    is_current_month: isCurrentMonth,
   }
 }
 
