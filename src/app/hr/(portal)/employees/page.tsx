@@ -58,7 +58,7 @@ export default function EmployeesPage() {
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white">Empleados</h2>
+        <h2 className="text-2xl font-bold text-zinc-900">Empleados</h2>
         <Button onClick={() => setShowModal(true)} className="bg-brand-red hover:bg-brand-red-dark gap-2">
           <UserPlus size={16} />
           Agregar empleado

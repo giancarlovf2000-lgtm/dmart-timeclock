@@ -79,7 +79,7 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
               {employee.employee_code}
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">{employee.full_name}</h2>
+              <h2 className="text-2xl font-bold text-zinc-900">{employee.full_name}</h2>
               <div className="flex items-center gap-2 mt-0.5">
                 {employee.department && <span className="text-zinc-500 text-sm">{employee.department}</span>}
                 <span className={`text-xs px-2 py-0.5 rounded-full ${employee.is_active ? 'bg-emerald-900/40 text-emerald-400' : 'bg-zinc-800 text-zinc-500'}`}>

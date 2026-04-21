@@ -13,7 +13,7 @@ export const viewport: Viewport = {
 
 export default function KioskLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-zinc-950 text-white overflow-hidden">
+    <div className="min-h-screen bg-white text-zinc-900 overflow-hidden">
       {children}
     </div>
   )

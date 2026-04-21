@@ -21,7 +21,7 @@ export default async function PortalLayout({ children }: { children: React.React
   const currentPeriodLabel = await getCurrentPeriodLabel()
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex">
+    <div className="min-h-screen bg-gray-50 flex">
       <HRSidebar currentPeriodLabel={currentPeriodLabel} />
       <main className="flex-1 overflow-auto">
         {children}

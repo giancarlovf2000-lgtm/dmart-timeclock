@@ -105,7 +105,7 @@ export default function PayPeriodsPage() {
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white">Períodos de Pago</h2>
+        <h2 className="text-2xl font-bold text-zinc-900">Períodos de Pago</h2>
         <Button onClick={() => setShowForm(!showForm)} className="bg-brand-red hover:bg-brand-red-dark gap-2">
           <CalendarPlus size={16} />
           Nuevo período

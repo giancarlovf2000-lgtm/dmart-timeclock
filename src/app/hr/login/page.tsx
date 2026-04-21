@@ -31,25 +31,23 @@ export default function HRLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8 gap-4">
-          <div className="bg-white rounded-2xl px-6 py-4 shadow-sm">
-            <Image
-              src="/dmart-logo.png"
-              alt="D'mart Institute"
-              width={220}
-              height={124}
-              className="object-contain"
-              priority
-            />
-          </div>
-          <p className="text-zinc-400 text-sm">Portal de Recursos Humanos</p>
+          <Image
+            src="/dmart-logo.png"
+            alt="D'mart Institute"
+            width={220}
+            height={124}
+            className="object-contain"
+            priority
+          />
+          <p className="text-zinc-500 text-sm">Portal de Recursos Humanos</p>
         </div>
 
-        <form onSubmit={handleLogin} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
+        <form onSubmit={handleLogin} className="bg-white border border-zinc-200 rounded-2xl p-6 space-y-4 shadow-sm">
           <div>
-            <label className="text-sm text-zinc-400 block mb-1.5">Correo electrónico</label>
+            <label className="text-sm text-zinc-600 block mb-1.5">Correo electrónico</label>
             <Input
               type="email"
               value={email}
@@ -57,12 +55,12 @@ export default function HRLoginPage() {
               placeholder="hr@dmartinstitute.com"
               required
               autoComplete="email"
-              className="bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500"
+              className="bg-white border-zinc-300 text-zinc-900 placeholder-zinc-400"
             />
           </div>
 
           <div>
-            <label className="text-sm text-zinc-400 block mb-1.5">Contraseña</label>
+            <label className="text-sm text-zinc-600 block mb-1.5">Contraseña</label>
             <Input
               type="password"
               value={password}
@@ -70,7 +68,7 @@ export default function HRLoginPage() {
               placeholder="••••••••"
               required
               autoComplete="current-password"
-              className="bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500"
+              className="bg-white border-zinc-300 text-zinc-900 placeholder-zinc-400"
             />
           </div>
 

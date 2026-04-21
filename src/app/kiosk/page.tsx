@@ -147,18 +147,16 @@ function KioskContent() {
 
       {/* Header */}
       <header className="px-6 pt-8 pb-4 flex flex-col items-center gap-2">
-        <div className="bg-white rounded-2xl px-5 py-3 shadow-sm">
-          <Image
-            src="/dmart-logo.png"
-            alt="D'mart Institute"
-            width={180}
-            height={101}
-            className="object-contain"
-            priority
-          />
-        </div>
+        <Image
+          src="/dmart-logo.png"
+          alt="D'mart Institute"
+          width={180}
+          height={101}
+          className="object-contain"
+          priority
+        />
         {locationName && (
-          <p className="text-zinc-400 text-sm">{locationName}</p>
+          <p className="text-zinc-500 text-sm">{locationName}</p>
         )}
       </header>
 
@@ -166,8 +164,8 @@ function KioskContent() {
       {(state === 'pin' || state === 'loading') && (
         <main className="flex-1 flex flex-col items-center justify-center px-6 gap-8">
           <div className="text-center">
-            <p className="text-zinc-300 text-lg">Ingresa tu código</p>
-            <p className="text-zinc-500 text-sm mt-1">3 dígitos</p>
+            <p className="text-zinc-700 text-lg">Ingresa tu código</p>
+            <p className="text-zinc-400 text-sm mt-1">3 dígitos</p>
           </div>
 
           <PinDisplay length={code.length} maxLength={3} />
@@ -189,9 +187,9 @@ function KioskContent() {
       {state === 'punch' && employee && (
         <main className="flex-1 flex flex-col items-center justify-between px-6 pb-8 gap-4">
           <div className="text-center py-2">
-            <p className="text-zinc-400 text-sm">Bienvenido/a</p>
-            <p className="text-white text-2xl font-bold">{employee.full_name}</p>
-            <p className="text-zinc-500 text-xs mt-1">Código: {employee.employee_code}</p>
+            <p className="text-zinc-500 text-sm">Bienvenido/a</p>
+            <p className="text-zinc-900 text-2xl font-bold">{employee.full_name}</p>
+            <p className="text-zinc-400 text-xs mt-1">Código: {employee.employee_code}</p>
           </div>
 
           <div className="w-full max-w-sm">

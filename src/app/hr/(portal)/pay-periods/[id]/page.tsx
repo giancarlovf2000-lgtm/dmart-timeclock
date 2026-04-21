@@ -53,7 +53,7 @@ export default function PayPeriodDetailPage({ params }: { params: { id: string }
         <div className="flex-1">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h2 className="text-2xl font-bold text-white">{period.label}</h2>
+              <h2 className="text-2xl font-bold text-zinc-900">{period.label}</h2>
               <div className="flex items-center gap-2 mt-1">
                 {period.is_current && (
                   <span className="text-xs bg-brand-red/15 text-brand-red border border-brand-red/30 px-2 py-0.5 rounded-full">Período actual</span>
