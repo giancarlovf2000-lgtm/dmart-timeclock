@@ -1,18 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Loader2 } from 'lucide-react'
+import Image from 'next/image'
 
 export default function HRLoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
   const supabase = createClient()
 
   async function handleLogin(e: React.FormEvent) {
@@ -28,16 +27,22 @@ export default function HRLoginPage() {
       return
     }
 
-    // Hard navigation so the server middleware picks up the new session cookie
     window.location.href = '/hr/dashboard'
   }
 
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-white">D&apos;mart Institute</h1>
-          <p className="text-zinc-400 mt-2">Portal de Recursos Humanos</p>
+        <div className="flex flex-col items-center mb-8 gap-4">
+          <Image
+            src="/dmart-logo.png"
+            alt="D'mart Institute"
+            width={220}
+            height={124}
+            className="object-contain"
+            priority
+          />
+          <p className="text-zinc-400 text-sm">Portal de Recursos Humanos</p>
         </div>
 
         <form onSubmit={handleLogin} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
@@ -76,7 +81,7 @@ export default function HRLoginPage() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white h-11"
+            className="w-full bg-brand-red hover:bg-brand-red-dark text-white h-11"
           >
             {loading ? <Loader2 size={18} className="animate-spin" /> : 'Iniciar sesión'}
           </Button>

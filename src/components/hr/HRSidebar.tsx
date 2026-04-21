@@ -1,10 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { LayoutDashboard, Users, CalendarRange, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 import { cn } from '@/lib/utils'
+import Image from 'next/image'
 
 const navItems = [
   { href: '/hr/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -18,7 +19,6 @@ interface Props {
 
 export function HRSidebar({ currentPeriodLabel }: Props) {
   const pathname = usePathname()
-  const router = useRouter()
   const supabase = createClient()
 
   async function handleLogout() {
@@ -29,15 +29,22 @@ export function HRSidebar({ currentPeriodLabel }: Props) {
   return (
     <aside className="w-64 min-h-screen bg-zinc-900 border-r border-zinc-800 flex flex-col">
       {/* Logo */}
-      <div className="px-6 py-6 border-b border-zinc-800">
-        <h1 className="text-white font-bold text-lg">D&apos;mart Institute</h1>
-        <p className="text-zinc-500 text-xs mt-1">Portal RR.HH.</p>
+      <div className="px-5 py-5 border-b border-zinc-800 flex flex-col items-start gap-1">
+        <Image
+          src="/dmart-logo.png"
+          alt="D'mart Institute"
+          width={160}
+          height={90}
+          className="object-contain"
+          priority
+        />
+        <p className="text-zinc-500 text-xs">Portal RR.HH.</p>
       </div>
 
       {/* Current period */}
       {currentPeriodLabel && (
-        <div className="px-4 py-3 mx-3 mt-4 rounded-lg bg-zinc-800 border border-zinc-700">
-          <p className="text-zinc-400 text-xs font-medium uppercase tracking-wide">Período Actual</p>
+        <div className="px-4 py-3 mx-3 mt-4 rounded-lg bg-brand-red/10 border border-brand-red/30">
+          <p className="text-brand-red text-xs font-medium uppercase tracking-wide">Período Actual</p>
           <p className="text-white text-sm font-semibold mt-1">{currentPeriodLabel}</p>
         </div>
       )}
@@ -53,7 +60,7 @@ export function HRSidebar({ currentPeriodLabel }: Props) {
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                 active
-                  ? 'bg-zinc-700 text-white'
+                  ? 'bg-brand-red/15 text-brand-red border-l-2 border-brand-red pl-[10px]'
                   : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
               )}
             >

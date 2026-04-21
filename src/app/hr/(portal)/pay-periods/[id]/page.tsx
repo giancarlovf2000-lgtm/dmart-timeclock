@@ -56,7 +56,7 @@ export default function PayPeriodDetailPage({ params }: { params: { id: string }
               <h2 className="text-2xl font-bold text-white">{period.label}</h2>
               <div className="flex items-center gap-2 mt-1">
                 {period.is_current && (
-                  <span className="text-xs bg-blue-900/50 text-blue-300 border border-blue-700 px-2 py-0.5 rounded-full">Período actual</span>
+                  <span className="text-xs bg-brand-red/15 text-brand-red border border-brand-red/30 px-2 py-0.5 rounded-full">Período actual</span>
                 )}
                 {period.is_closed && (
                   <span className="text-xs bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded-full">Cerrado</span>

@@ -45,7 +45,7 @@ export function NumericKeypad({ onDigit, onBackspace, onClear, disabled }: Props
             key={key}
             onClick={() => onDigit(key)}
             disabled={disabled}
-            className="h-16 rounded-2xl bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-white text-2xl font-bold transition-colors disabled:opacity-40 select-none"
+            className="h-16 rounded-2xl bg-zinc-800 hover:bg-zinc-700 active:bg-brand-red/80 text-white text-2xl font-bold transition-colors disabled:opacity-40 select-none"
           >
             {key}
           </button>

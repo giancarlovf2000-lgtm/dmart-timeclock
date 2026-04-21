@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ExportButton } from '@/components/hr/ExportButton'
 import { minutesToHours, minutesToHoursLabel } from '@/lib/pay-periods'
-import { Calendar, Clock, AlertTriangle, ChevronRight, Users } from 'lucide-react'
+import { Calendar, Clock, AlertTriangle, ChevronRight } from 'lucide-react'
 
 interface EmployeeHours {
   employee_id: string
@@ -64,8 +64,8 @@ export default function DashboardPage() {
       {data?.current_period ? (
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-1">
-            <Calendar size={16} className="text-blue-400" />
-            <span className="text-blue-400 text-sm font-medium uppercase tracking-wide">Período Actual</span>
+            <Calendar size={16} className="text-brand-red" />
+            <span className="text-brand-red text-sm font-medium uppercase tracking-wide">Período Actual</span>
           </div>
           <p className="text-white text-xl font-bold">{data.current_period.label}</p>
           <p className="text-zinc-500 text-sm mt-1">
@@ -81,7 +81,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Employee hours — show regardless of period */}
+      {/* Employee hours */}
       {(data?.employee_hours?.length ?? 0) > 0 && (
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
           <div className="px-5 py-4 border-b border-zinc-800 flex items-center gap-2">
@@ -91,56 +91,48 @@ export default function DashboardPage() {
             </h3>
           </div>
 
-          {(data?.employee_hours?.length ?? 0) === 0 ? (
-            <div className="px-5 py-8 text-center text-zinc-500">
-              No hay ponches registrados en este período
-            </div>
-          ) : (
-            <div className="divide-y divide-zinc-800">
-              {(data?.employee_hours ?? []).map(emp => (
-                <Link
-                  key={emp.employee_id}
-                  href={`/hr/employees/${emp.employee_id}`}
-                  className="flex items-center justify-between px-5 py-4 hover:bg-zinc-800 transition-colors group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-zinc-700 flex items-center justify-center text-sm font-bold text-zinc-300">
-                      {emp.employee_code}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-white font-medium">{emp.full_name}</span>
-                        {emp.has_open_session && (
-                          <span className="flex items-center gap-1 text-amber-400 text-xs">
-                            <AlertTriangle size={12} />
-                            Turno abierto
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-zinc-500 text-sm">{emp.session_count} sesión{emp.session_count !== 1 ? 'es' : ''}</span>
-                    </div>
+          <div className="divide-y divide-zinc-800">
+            {(data?.employee_hours ?? []).map(emp => (
+              <Link
+                key={emp.employee_id}
+                href={`/hr/employees/${emp.employee_id}`}
+                className="flex items-center justify-between px-5 py-4 hover:bg-zinc-800 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-zinc-700 flex items-center justify-center text-sm font-bold text-zinc-300">
+                    {emp.employee_code}
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <span className="text-white font-bold text-lg">{minutesToHours(emp.total_minutes)}</span>
-                      <span className="text-zinc-500 text-sm ml-1">hrs</span>
-                      <p className="text-zinc-600 text-xs">{minutesToHoursLabel(emp.total_minutes)}</p>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-white font-medium">{emp.full_name}</span>
+                      {emp.has_open_session && (
+                        <span className="flex items-center gap-1 text-amber-400 text-xs">
+                          <AlertTriangle size={12} />
+                          Turno abierto
+                        </span>
+                      )}
                     </div>
-                    <ChevronRight size={16} className="text-zinc-600 group-hover:text-zinc-400" />
+                    <span className="text-zinc-500 text-sm">{emp.session_count} sesión{emp.session_count !== 1 ? 'es' : ''}</span>
                   </div>
-                </Link>
-              ))}
-            </div>
-          )}
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <span className="text-white font-bold text-lg">{minutesToHours(emp.total_minutes)}</span>
+                    <span className="text-zinc-500 text-sm ml-1">hrs</span>
+                    <p className="text-zinc-600 text-xs">{minutesToHoursLabel(emp.total_minutes)}</p>
+                  </div>
+                  <ChevronRight size={16} className="text-zinc-600 group-hover:text-zinc-400" />
+                </div>
+              </Link>
+            ))}
+          </div>
 
-          {(data?.employee_hours?.length ?? 0) > 0 && (
-            <div className="px-5 py-3 bg-zinc-800/50 border-t border-zinc-700 flex justify-between items-center">
-              <span className="text-zinc-400 text-sm">Total acumulado</span>
-              <span className="text-white font-bold">
-                {minutesToHours((data?.employee_hours ?? []).reduce((s, e) => s + e.total_minutes, 0))} hrs
-              </span>
-            </div>
-          )}
+          <div className="px-5 py-3 bg-zinc-800/50 border-t border-zinc-700 flex justify-between items-center">
+            <span className="text-zinc-400 text-sm">Total acumulado</span>
+            <span className="text-white font-bold">
+              {minutesToHours((data?.employee_hours ?? []).reduce((s, e) => s + e.total_minutes, 0))} hrs
+            </span>
+          </div>
         </div>
       )}
 

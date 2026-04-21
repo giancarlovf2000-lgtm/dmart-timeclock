@@ -59,7 +59,7 @@ export default function EmployeesPage() {
     <div className="p-6 max-w-4xl mx-auto space-y-5">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-white">Empleados</h2>
-        <Button onClick={() => setShowModal(true)} className="bg-blue-600 hover:bg-blue-500 gap-2">
+        <Button onClick={() => setShowModal(true)} className="bg-brand-red hover:bg-brand-red-dark gap-2">
           <UserPlus size={16} />
           Agregar empleado
         </Button>
@@ -106,7 +106,7 @@ export default function EmployeesPage() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <Link href={`/hr/employees/${emp.id}`} className="text-white font-medium hover:text-blue-300 transition-colors">
+                  <Link href={`/hr/employees/${emp.id}`} className="text-white font-medium hover:text-brand-red-light transition-colors">
                     {emp.full_name}
                   </Link>
                   <div className="flex items-center gap-2 mt-0.5">

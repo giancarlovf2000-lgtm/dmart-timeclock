@@ -7,6 +7,7 @@ import { PinDisplay } from '@/components/kiosk/PinDisplay'
 import { CameraPreview, CameraHandle } from '@/components/kiosk/CameraPreview'
 import { PunchStatusBanner } from '@/components/kiosk/PunchStatusBanner'
 import { LogIn, LogOut, Loader2 } from 'lucide-react'
+import Image from 'next/image'
 
 interface Employee {
   id: string
@@ -31,7 +32,6 @@ function KioskContent() {
 
   const cameraRef = useRef<CameraHandle>(null)
 
-  // Save location to sessionStorage on first load
   useEffect(() => {
     if (location !== 'unknown') {
       sessionStorage.setItem('kiosk_location', location)
@@ -146,10 +146,17 @@ function KioskContent() {
       )}
 
       {/* Header */}
-      <header className="px-6 pt-8 pb-4 text-center">
-        <h1 className="text-2xl font-bold text-white">D'mart Institute</h1>
+      <header className="px-6 pt-8 pb-4 flex flex-col items-center gap-2">
+        <Image
+          src="/dmart-logo.png"
+          alt="D'mart Institute"
+          width={180}
+          height={101}
+          className="object-contain"
+          priority
+        />
         {locationName && (
-          <p className="text-zinc-400 text-sm mt-1">{locationName}</p>
+          <p className="text-zinc-400 text-sm">{locationName}</p>
         )}
       </header>
 
@@ -164,7 +171,7 @@ function KioskContent() {
           <PinDisplay length={code.length} maxLength={3} />
 
           {state === 'loading' && (
-            <Loader2 className="animate-spin text-zinc-400" size={32} />
+            <Loader2 className="animate-spin text-brand-red" size={32} />
           )}
 
           <NumericKeypad
@@ -211,7 +218,7 @@ function KioskContent() {
             ) : (
               <button
                 onClick={() => handlePunch('CLOCK_OUT')}
-                className="w-full h-16 rounded-2xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-xl font-bold flex items-center justify-center gap-3 transition-colors"
+                className="w-full h-16 rounded-2xl bg-brand-red hover:bg-brand-red-dark active:bg-brand-red-dark text-white text-xl font-bold flex items-center justify-center gap-3 transition-colors"
               >
                 <LogOut size={24} />
                 Clock Out

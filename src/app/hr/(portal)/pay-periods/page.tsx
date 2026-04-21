@@ -106,7 +106,7 @@ export default function PayPeriodsPage() {
     <div className="p-6 max-w-3xl mx-auto space-y-5">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-white">Períodos de Pago</h2>
-        <Button onClick={() => setShowForm(!showForm)} className="bg-blue-600 hover:bg-blue-500 gap-2">
+        <Button onClick={() => setShowForm(!showForm)} className="bg-brand-red hover:bg-brand-red-dark gap-2">
           <CalendarPlus size={16} />
           Nuevo período
         </Button>
@@ -153,7 +153,7 @@ export default function PayPeriodsPage() {
               type="checkbox"
               checked={setCurrent}
               onChange={e => setSetCurrent(e.target.checked)}
-              className="accent-blue-600"
+              className="accent-brand-red"
             />
             <span className="text-zinc-300 text-sm">Marcar como período actual</span>
           </label>
@@ -164,7 +164,7 @@ export default function PayPeriodsPage() {
             <Button type="button" variant="outline" onClick={() => setShowForm(false)} className="flex-1 border-zinc-700 text-zinc-300 hover:bg-zinc-800">
               Cancelar
             </Button>
-            <Button type="submit" disabled={submitting || !startDate} className="flex-1 bg-blue-600 hover:bg-blue-500">
+            <Button type="submit" disabled={submitting || !startDate} className="flex-1 bg-brand-red hover:bg-brand-red-dark">
               {submitting ? 'Creando...' : 'Crear período'}
             </Button>
           </div>
@@ -184,15 +184,15 @@ export default function PayPeriodsPage() {
           <div className="divide-y divide-zinc-800">
             {periods.map(period => (
               <div key={period.id} className="flex items-center gap-4 px-5 py-4">
-                <Calendar size={18} className={period.is_current ? 'text-blue-400' : 'text-zinc-500'} />
+                <Calendar size={18} className={period.is_current ? 'text-brand-red' : 'text-zinc-500'} />
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Link href={`/hr/pay-periods/${period.id}`} className="text-white font-medium hover:text-blue-300 transition-colors">
+                    <Link href={`/hr/pay-periods/${period.id}`} className="text-white font-medium hover:text-brand-red-light transition-colors">
                       {period.label}
                     </Link>
                     {period.is_current && (
-                      <span className="text-xs bg-blue-900/50 text-blue-300 border border-blue-700 px-2 py-0.5 rounded-full">Actual</span>
+                      <span className="text-xs bg-brand-red/15 text-brand-red border border-brand-red/30 px-2 py-0.5 rounded-full">Actual</span>
                     )}
                     {period.is_closed && (
                       <span className="text-xs bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded-full">Cerrado</span>
@@ -204,7 +204,7 @@ export default function PayPeriodsPage() {
                   {!period.is_current && !period.is_closed && (
                     <button
                       onClick={() => markCurrent(period.id)}
-                      className="text-xs text-zinc-500 hover:text-blue-400 transition-colors flex items-center gap-1"
+                      className="text-xs text-zinc-500 hover:text-brand-red transition-colors flex items-center gap-1"
                       title="Marcar como actual"
                     >
                       <Check size={14} />

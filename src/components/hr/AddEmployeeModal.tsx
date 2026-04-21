@@ -115,7 +115,7 @@ export function AddEmployeeModal({ open, onClose, onAdded }: Props) {
               <Button type="button" variant="outline" onClick={handleClose} className="flex-1 border-zinc-700 text-zinc-300 hover:bg-zinc-800">
                 Cancelar
               </Button>
-              <Button type="submit" disabled={loading || !fullName.trim()} className="flex-1 bg-blue-600 hover:bg-blue-500">
+              <Button type="submit" disabled={loading || !fullName.trim()} className="flex-1 bg-brand-red hover:bg-brand-red-dark">
                 {loading ? 'Creando...' : 'Crear empleado'}
               </Button>
             </div>

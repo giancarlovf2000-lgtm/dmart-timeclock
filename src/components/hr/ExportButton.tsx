@@ -39,7 +39,7 @@ export function ExportButton({ periodId, periodLabel }: Props) {
     <Button
       onClick={handleExport}
       disabled={loading}
-      className="bg-emerald-700 hover:bg-emerald-600 text-white gap-2"
+      className="bg-brand-red hover:bg-brand-red-dark text-white gap-2"
     >
       {loading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
       {loading ? 'Generando...' : 'Exportar QuickBooks CSV'}
