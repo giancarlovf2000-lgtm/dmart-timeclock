@@ -13,6 +13,8 @@ interface Employee {
   quickbooks_display_name: string | null
   department: string | null
   is_active: boolean
+  hire_date: string | null
+  applicable_law: 'ley_vieja' | 'ley_nueva' | null
   created_at: string
 }
 
@@ -25,10 +27,29 @@ interface Punch {
   locations: { name: string } | null
 }
 
+interface LeaveMonth {
+  month_year: string
+  hours_worked: number
+  qualified: boolean
+  vacation_hours: number
+  sick_hours: number
+  years_of_service: number
+  is_current_month: boolean
+}
+
+interface LeaveData {
+  hire_date: string
+  applicable_law: string
+  total_vacation_hours: number
+  total_sick_hours: number
+  months: LeaveMonth[]
+}
+
 export default function EmployeeDetailPage({ params }: { params: { id: string } }) {
   const id = params.id
   const [employee, setEmployee] = useState<Employee | null>(null)
   const [punches, setPunches] = useState<Punch[]>([])
+  const [leaveData, setLeaveData] = useState<LeaveData | null>(null)
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState('')
   const [photoModal, setPhotoModal] = useState<string | null>(null)
@@ -37,10 +58,12 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
     Promise.all([
       fetch(`/api/hr/employees/${id}`).then(r => r.json()),
       fetch(`/api/hr/employees/${id}/punches`).then(r => r.json()),
+      fetch(`/api/hr/employees/${id}/leave`).then(r => r.json()),
     ])
-      .then(([emp, p]) => {
+      .then(([emp, p, leave]) => {
         setEmployee(emp?.id ? emp : null)
         setPunches(Array.isArray(p) ? p : [])
+        if (leave && !leave.error) setLeaveData(leave)
       })
       .catch(() => setFetchError('Error cargando datos'))
       .finally(() => setLoading(false))
@@ -67,10 +90,16 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
   if (fetchError) return <div className="p-6 text-red-400">{fetchError}</div>
   if (!employee) return <div className="p-6 text-red-400">Empleado no encontrado</div>
 
+  const lawLabel = employee.applicable_law === 'ley_vieja'
+    ? 'Ley Vieja — Núm. 180'
+    : employee.applicable_law === 'ley_nueva'
+    ? 'Ley Nueva — Núm. 4 de 2017'
+    : null
+
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex items-start gap-4">
-        <Link href="/hr/employees" className="text-zinc-500 hover:text-white transition-colors mt-1">
+        <Link href="/hr/employees" className="text-zinc-500 hover:text-zinc-900 transition-colors mt-1">
           <ArrowLeft size={20} />
         </Link>
         <div className="flex-1">
@@ -85,12 +114,112 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
                 <span className={`text-xs px-2 py-0.5 rounded-full ${employee.is_active ? 'bg-emerald-900/40 text-emerald-400' : 'bg-zinc-800 text-zinc-500'}`}>
                   {employee.is_active ? 'Activo' : 'Inactivo'}
                 </span>
+                {employee.hire_date && (
+                  <span className="text-zinc-400 text-xs">
+                    Contratado: {new Date(employee.hire_date + 'T00:00:00').toLocaleDateString('es-PR')}
+                  </span>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Licencias card */}
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
+          <div>
+            <h3 className="text-white font-semibold">Licencias</h3>
+            <p className="text-zinc-500 text-sm mt-0.5">Acumulado bajo ley laboral de Puerto Rico</p>
+          </div>
+          {lawLabel && (
+            <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+              employee.applicable_law === 'ley_vieja'
+                ? 'bg-amber-900/40 text-amber-400'
+                : 'bg-purple-900/40 text-purple-400'
+            }`}>
+              {lawLabel}
+            </span>
+          )}
+        </div>
+
+        {!employee.hire_date ? (
+          <div className="px-5 py-6 text-center text-zinc-500 text-sm">
+            Falta la fecha de contratación. Edita el empleado para agregar esta información.
+          </div>
+        ) : !leaveData ? (
+          <div className="px-5 py-6 text-center text-zinc-500 text-sm">
+            No hay datos de licencia disponibles aún.
+          </div>
+        ) : (
+          <>
+            {/* Balance totals */}
+            <div className="grid grid-cols-2 divide-x divide-zinc-800 border-b border-zinc-800">
+              <div className="px-5 py-4">
+                <p className="text-zinc-500 text-xs uppercase tracking-wide mb-1">Vacaciones acumuladas</p>
+                <p className="text-white text-2xl font-bold">
+                  {leaveData.total_vacation_hours.toFixed(1)}
+                  <span className="text-zinc-400 text-sm font-normal ml-1">hrs</span>
+                </p>
+                <p className="text-zinc-600 text-xs mt-1">{(leaveData.total_vacation_hours / 8).toFixed(2)} días</p>
+              </div>
+              <div className="px-5 py-4">
+                <p className="text-zinc-500 text-xs uppercase tracking-wide mb-1">Enfermedad acumulada</p>
+                <p className="text-white text-2xl font-bold">
+                  {leaveData.total_sick_hours.toFixed(1)}
+                  <span className="text-zinc-400 text-sm font-normal ml-1">hrs</span>
+                </p>
+                <p className="text-zinc-600 text-xs mt-1">{(leaveData.total_sick_hours / 8).toFixed(2)} días</p>
+              </div>
+            </div>
+
+            {/* Monthly breakdown */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-800">
+                    <th className="px-5 py-3 text-left text-zinc-500 text-xs uppercase tracking-wide">Mes</th>
+                    <th className="px-4 py-3 text-right text-zinc-500 text-xs uppercase tracking-wide">Horas</th>
+                    <th className="px-4 py-3 text-center text-zinc-500 text-xs uppercase tracking-wide">Calificó</th>
+                    <th className="px-4 py-3 text-right text-zinc-500 text-xs uppercase tracking-wide">Vacac.</th>
+                    <th className="px-4 py-3 text-right text-zinc-500 text-xs uppercase tracking-wide">Enferm.</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800">
+                  {[...leaveData.months].reverse().map((m) => (
+                    <tr key={m.month_year} className={m.is_current_month ? 'opacity-60' : ''}>
+                      <td className="px-5 py-3 text-zinc-300">
+                        {new Date(m.month_year).toLocaleDateString('es-PR', {
+                          month: 'short', year: 'numeric', timeZone: 'UTC'
+                        })}
+                        {m.is_current_month && (
+                          <span className="ml-2 text-xs bg-zinc-700 text-zinc-400 px-1.5 py-0.5 rounded">
+                            En progreso
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right text-zinc-300">{m.hours_worked.toFixed(1)}</td>
+                      <td className="px-4 py-3 text-center">
+                        {m.qualified
+                          ? <span className="text-emerald-400 text-xs font-medium">Sí</span>
+                          : <span className="text-zinc-600 text-xs">No</span>}
+                      </td>
+                      <td className="px-4 py-3 text-right text-zinc-300">
+                        {m.vacation_hours > 0 ? `${m.vacation_hours}h` : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-right text-zinc-300">
+                        {m.sick_hours > 0 ? `${m.sick_hours}h` : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Punch history card */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-zinc-800">
           <h3 className="text-white font-semibold">Historial de ponches</h3>

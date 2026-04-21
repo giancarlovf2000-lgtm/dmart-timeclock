@@ -11,7 +11,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const { data, error } = await supabase
     .from('employees')
-    .select('id, employee_code, full_name, quickbooks_display_name, department, is_active, created_at')
+    .select('id, employee_code, full_name, quickbooks_display_name, department, is_active, hire_date, applicable_law, created_at')
     .eq('id', id)
     .single()
 
@@ -32,13 +32,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (body.quickbooks_display_name !== undefined) updates.quickbooks_display_name = body.quickbooks_display_name.trim()
   if (body.department !== undefined) updates.department = body.department?.trim() || null
   if (body.is_active !== undefined) updates.is_active = Boolean(body.is_active)
+  if (body.hire_date !== undefined) updates.hire_date = body.hire_date || null
+  if (body.applicable_law !== undefined) updates.applicable_law = body.applicable_law || null
   updates.updated_at = new Date().toISOString()
 
   const { data, error } = await supabase
     .from('employees')
     .update(updates)
     .eq('id', id)
-    .select('id, employee_code, full_name, quickbooks_display_name, department, is_active, created_at')
+    .select('id, employee_code, full_name, quickbooks_display_name, department, is_active, hire_date, applicable_law, created_at')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { CheckCircle2, Copy } from 'lucide-react'
+import { assignLaw, LEY_NUEVA_CUTOFF, type ApplicableLaw } from '@/lib/leave-accrual'
 
 interface Props {
   open: boolean
@@ -16,10 +17,18 @@ export function AddEmployeeModal({ open, onClose, onAdded }: Props) {
   const [fullName, setFullName] = useState('')
   const [qbName, setQbName] = useState('')
   const [department, setDepartment] = useState('')
+  const [hireDate, setHireDate] = useState('')
+  const [lawOverride, setLawOverride] = useState<'auto' | ApplicableLaw>('auto')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [created, setCreated] = useState<{ employee_code: string; full_name: string } | null>(null)
   const [copied, setCopied] = useState(false)
+
+  const autoLaw: ApplicableLaw | null = hireDate
+    ? assignLaw(new Date(hireDate + 'T00:00:00'))
+    : null
+
+  const effectiveLaw: ApplicableLaw | null = lawOverride === 'auto' ? autoLaw : lawOverride
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -35,6 +44,8 @@ export function AddEmployeeModal({ open, onClose, onAdded }: Props) {
           full_name: fullName.trim(),
           quickbooks_display_name: qbName.trim() || fullName.trim(),
           department: department.trim(),
+          hire_date: hireDate || null,
+          applicable_law: effectiveLaw || null,
         }),
       })
       const data = await res.json()
@@ -62,10 +73,20 @@ export function AddEmployeeModal({ open, onClose, onAdded }: Props) {
     setFullName('')
     setQbName('')
     setDepartment('')
+    setHireDate('')
+    setLawOverride('auto')
     setError('')
     setCreated(null)
     setCopied(false)
     onClose()
+  }
+
+  function toggleLaw() {
+    if (lawOverride === 'auto') {
+      setLawOverride(effectiveLaw === 'ley_vieja' ? 'ley_nueva' : 'ley_vieja')
+    } else {
+      setLawOverride('auto')
+    }
   }
 
   return (
@@ -108,6 +129,44 @@ export function AddEmployeeModal({ open, onClose, onAdded }: Props) {
                 className="bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500"
               />
             </div>
+
+            <div>
+              <label className="text-sm text-zinc-400 block mb-1">Fecha de contratación</label>
+              <Input
+                type="date"
+                value={hireDate}
+                onChange={e => { setHireDate(e.target.value); setLawOverride('auto') }}
+                className="bg-zinc-800 border-zinc-700 text-white"
+              />
+            </div>
+
+            {/* Law preview — shown once hire date is entered */}
+            {effectiveLaw && (
+              <div className="flex items-center justify-between px-3 py-2.5 bg-zinc-800 rounded-lg">
+                <div>
+                  <p className="text-zinc-500 text-xs mb-1">Ley laboral aplicable</p>
+                  <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                    effectiveLaw === 'ley_vieja'
+                      ? 'bg-amber-900/40 text-amber-400'
+                      : 'bg-purple-900/40 text-purple-400'
+                  }`}>
+                    {effectiveLaw === 'ley_vieja'
+                      ? 'Ley Vieja — Núm. 180 de 1998'
+                      : 'Ley Nueva — Núm. 4 de 2017'}
+                  </span>
+                  {lawOverride !== 'auto' && (
+                    <span className="ml-2 text-xs text-zinc-500">ajustado manualmente</span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={toggleLaw}
+                  className="text-xs text-zinc-400 hover:text-white underline shrink-0 ml-3"
+                >
+                  {lawOverride === 'auto' ? 'Cambiar' : 'Restablecer'}
+                </button>
+              </div>
+            )}
 
             {error && <p className="text-red-400 text-sm">{error}</p>}
 
