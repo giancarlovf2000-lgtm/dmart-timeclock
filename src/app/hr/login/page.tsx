@@ -34,14 +34,16 @@ export default function HRLoginPage() {
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8 gap-4">
-          <Image
-            src="/dmart-logo.png"
-            alt="D'mart Institute"
-            width={220}
-            height={124}
-            className="object-contain"
-            priority
-          />
+          <div className="bg-white rounded-2xl px-6 py-4 shadow-sm">
+            <Image
+              src="/dmart-logo.png"
+              alt="D'mart Institute"
+              width={220}
+              height={124}
+              className="object-contain"
+              priority
+            />
+          </div>
           <p className="text-zinc-400 text-sm">Portal de Recursos Humanos</p>
         </div>
 

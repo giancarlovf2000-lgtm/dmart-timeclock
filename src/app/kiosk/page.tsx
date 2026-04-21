@@ -147,14 +147,16 @@ function KioskContent() {
 
       {/* Header */}
       <header className="px-6 pt-8 pb-4 flex flex-col items-center gap-2">
-        <Image
-          src="/dmart-logo.png"
-          alt="D'mart Institute"
-          width={180}
-          height={101}
-          className="object-contain"
-          priority
-        />
+        <div className="bg-white rounded-2xl px-5 py-3 shadow-sm">
+          <Image
+            src="/dmart-logo.png"
+            alt="D'mart Institute"
+            width={180}
+            height={101}
+            className="object-contain"
+            priority
+          />
+        </div>
         {locationName && (
           <p className="text-zinc-400 text-sm">{locationName}</p>
         )}

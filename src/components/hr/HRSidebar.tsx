@@ -27,9 +27,9 @@ export function HRSidebar({ currentPeriodLabel }: Props) {
   }
 
   return (
-    <aside className="w-64 min-h-screen bg-zinc-900 border-r border-zinc-800 flex flex-col">
+    <aside className="w-64 min-h-screen bg-white border-r border-zinc-200 flex flex-col">
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-zinc-800 flex flex-col items-start gap-1">
+      <div className="px-5 py-5 border-b border-zinc-200 flex flex-col items-start gap-1">
         <Image
           src="/dmart-logo.png"
           alt="D'mart Institute"
@@ -38,14 +38,14 @@ export function HRSidebar({ currentPeriodLabel }: Props) {
           className="object-contain"
           priority
         />
-        <p className="text-zinc-500 text-xs">Portal RR.HH.</p>
+        <p className="text-zinc-400 text-xs">Portal RR.HH.</p>
       </div>
 
       {/* Current period */}
       {currentPeriodLabel && (
         <div className="px-4 py-3 mx-3 mt-4 rounded-lg bg-brand-red/10 border border-brand-red/30">
           <p className="text-brand-red text-xs font-medium uppercase tracking-wide">Período Actual</p>
-          <p className="text-white text-sm font-semibold mt-1">{currentPeriodLabel}</p>
+          <p className="text-zinc-800 text-sm font-semibold mt-1">{currentPeriodLabel}</p>
         </div>
       )}
 
@@ -60,8 +60,8 @@ export function HRSidebar({ currentPeriodLabel }: Props) {
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                 active
-                  ? 'bg-brand-red/15 text-brand-red border-l-2 border-brand-red pl-[10px]'
-                  : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                  ? 'bg-brand-red/10 text-brand-red border-l-2 border-brand-red pl-[10px]'
+                  : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900'
               )}
             >
               <Icon size={18} />
@@ -75,7 +75,7 @@ export function HRSidebar({ currentPeriodLabel }: Props) {
       <div className="px-3 pb-6">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
         >
           <LogOut size={18} />
           Cerrar sesión
