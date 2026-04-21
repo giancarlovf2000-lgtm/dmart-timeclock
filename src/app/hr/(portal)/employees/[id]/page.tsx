@@ -58,15 +58,19 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
     Promise.all([
       fetch(`/api/hr/employees/${id}`).then(r => r.json()),
       fetch(`/api/hr/employees/${id}/punches`).then(r => r.json()),
-      fetch(`/api/hr/employees/${id}/leave`).then(r => r.json()),
     ])
-      .then(([emp, p, leave]) => {
+      .then(([emp, p]) => {
         setEmployee(emp?.id ? emp : null)
         setPunches(Array.isArray(p) ? p : [])
-        if (leave && !leave.error) setLeaveData(leave)
       })
       .catch(() => setFetchError('Error cargando datos'))
       .finally(() => setLoading(false))
+
+    // Leave fetched independently so a failure never crashes the main view
+    fetch(`/api/hr/employees/${id}/leave`)
+      .then(r => r.json())
+      .then(leave => { if (leave && !leave.error) setLeaveData(leave) })
+      .catch(() => {})
   }, [id])
 
   // Group punches into sessions

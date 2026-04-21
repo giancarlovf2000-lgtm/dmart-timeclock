@@ -8,11 +8,11 @@ import {
   type ApplicableLaw,
 } from '@/lib/leave-accrual'
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireHR()
   if (auth instanceof NextResponse) return auth
 
-  const { id } = params
+  const { id } = await params
   const supabase = createServiceClient()
 
   const { data: employee, error: empError } = await supabase
