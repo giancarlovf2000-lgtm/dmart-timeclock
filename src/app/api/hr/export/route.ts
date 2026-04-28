@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { requireHR } from '@/lib/require-hr'
 import { buildQuickBooksCSV } from '@/lib/csv-export'
+import { creditedMinutes, type PayType } from '@/lib/pay-type-rules'
 
 export async function GET(request: NextRequest) {
   const auth = await requireHR()
@@ -59,10 +60,9 @@ export async function GET(request: NextRequest) {
     entry.uniqueDates.add(session.work_date as string)
   }
 
-  // Exempt employees: 8h per unique work date (not per session)
   const employees = Array.from(employeeMap.values()).map(e => ({
     ...e,
-    total_minutes: e.pay_type === 'exempt' ? e.uniqueDates.size * 480 : e.total_minutes,
+    total_minutes: creditedMinutes(e.pay_type as PayType, e.uniqueDates.size, e.total_minutes),
   }))
 
   const csv = buildQuickBooksCSV(employees, period)

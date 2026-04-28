@@ -7,6 +7,7 @@ import {
   enumerateMonths,
   type ApplicableLaw,
 } from '@/lib/leave-accrual'
+import { type PayType, DAILY_CREDITED_MINUTES } from '@/lib/pay-type-rules'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireHR()
@@ -31,7 +32,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const hireDate = new Date(employee.hire_date + 'T00:00:00')
   const applicableLaw: ApplicableLaw = (employee.applicable_law as ApplicableLaw) ?? assignLaw(hireDate)
-  const isExempt = employee.pay_type === 'exempt'
+  const payType = (employee.pay_type ?? 'regular') as PayType
+  const dailyCredited = DAILY_CREDITED_MINUTES[payType] // null = use actual minutes
 
   const { data: sessions } = await supabase
     .from('work_sessions')
@@ -65,9 +67,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const monthResults = months.map(monthYear => {
     const key = monthYear.toISOString().slice(0, 7)
-    // Exempt employees get 8h (480 min) per unique work date credited for accrual
-    const minutesWorked = isExempt
-      ? (monthUniqueDatesMap.get(key)?.size ?? 0) * 480
+    // For pay types with a fixed daily credit, use uniqueDates × credit; otherwise actual minutes
+    const minutesWorked = dailyCredited !== null
+      ? (monthUniqueDatesMap.get(key)?.size ?? 0) * dailyCredited
       : (monthMinutesMap.get(key) ?? 0)
     const isCurrentMonth = monthYear.getTime() === currentMonthStart.getTime()
 
@@ -84,14 +86,27 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return result
   })
 
+  // Subtract resolved leave deductions (HR-applied)
+  const { data: deductions } = await supabase
+    .from('employee_events')
+    .select('leave_type_applied, leave_hours_owed')
+    .eq('employee_id', id)
+    .eq('event_type', 'leave_deduction_applied')
+    .eq('resolved', true)
+
+  for (const d of deductions ?? []) {
+    if (d.leave_type_applied === 'vacation') totalVacationHours -= (d.leave_hours_owed ?? 0)
+    if (d.leave_type_applied === 'sick') totalSickHours -= (d.leave_hours_owed ?? 0)
+  }
+
   return NextResponse.json({
     hire_date: employee.hire_date,
     applicable_law: applicableLaw,
-    pay_type: employee.pay_type ?? 'regular',
+    pay_type: payType,
     initial_vacation_hours: parseFloat(employee.initial_vacation_hours) || 0,
     initial_sick_hours: parseFloat(employee.initial_sick_hours) || 0,
-    total_vacation_hours: Math.round(totalVacationHours * 100) / 100,
-    total_sick_hours: Math.round(totalSickHours * 100) / 100,
+    total_vacation_hours: Math.round(Math.max(0, totalVacationHours) * 100) / 100,
+    total_sick_hours: Math.round(Math.max(0, totalSickHours) * 100) / 100,
     months: monthResults,
   })
 }

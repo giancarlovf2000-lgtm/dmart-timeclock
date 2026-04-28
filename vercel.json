@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/hr/cron/auto-clockout",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}

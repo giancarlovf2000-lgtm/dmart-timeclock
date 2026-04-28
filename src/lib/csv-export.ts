@@ -24,7 +24,13 @@ export function buildQuickBooksCSV(employees: EmployeeSummary[], period: PeriodI
     .map(e => {
       const name = (e.quickbooks_display_name || e.employee_name).replace(/"/g, '""')
       const hours = (e.total_minutes / 60).toFixed(2)
-      const payTypeLabel = e.pay_type === 'exempt' ? 'Exempt' : 'Regular'
+      const payTypeLabels: Record<string, string> = {
+        regular: 'Regular',
+        exempt: 'Exempt',
+        professor_exempt: 'Professor Exempt',
+        professor_regular: 'Professor Regular',
+      }
+      const payTypeLabel = payTypeLabels[e.pay_type ?? 'regular'] ?? 'Regular'
       return `"${name}",${periodStart},${periodEnd},${hours},${payTypeLabel}`
     })
 

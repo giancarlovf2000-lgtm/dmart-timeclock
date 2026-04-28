@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       applicable_law: applicable_law || null,
       initial_vacation_hours: parseFloat(initial_vacation_hours) || 0,
       initial_sick_hours: parseFloat(initial_sick_hours) || 0,
-      pay_type: pay_type === 'exempt' ? 'exempt' : 'regular',
+      pay_type: ['exempt', 'professor_exempt', 'professor_regular'].includes(pay_type) ? pay_type : 'regular',
     })
     .select('id, employee_code, full_name, quickbooks_display_name, department, is_active, hire_date, applicable_law, initial_vacation_hours, initial_sick_hours, pay_type, created_at')
     .single()

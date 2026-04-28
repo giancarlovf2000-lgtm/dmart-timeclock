@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, CalendarRange, LogOut } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { LayoutDashboard, Users, CalendarRange, LogOut, Bell } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
@@ -11,6 +12,7 @@ const navItems = [
   { href: '/hr/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/hr/employees', label: 'Empleados', icon: Users },
   { href: '/hr/pay-periods', label: 'Períodos de Pago', icon: CalendarRange },
+  { href: '/hr/actividad', label: 'Actividad', icon: Bell },
 ]
 
 interface Props {
@@ -20,6 +22,14 @@ interface Props {
 export function HRSidebar({ currentPeriodLabel }: Props) {
   const pathname = usePathname()
   const supabase = createClient()
+  const [unresolvedCount, setUnresolvedCount] = useState(0)
+
+  useEffect(() => {
+    fetch('/api/hr/events?resolved=false&limit=50')
+      .then(r => r.json())
+      .then(d => setUnresolvedCount((d.events ?? []).length))
+      .catch(() => {})
+  }, [pathname])
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -53,6 +63,7 @@ export function HRSidebar({ currentPeriodLabel }: Props) {
       <nav className="flex-1 px-3 py-4 space-y-1">
         {navItems.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + '/')
+          const showBadge = href === '/hr/actividad' && unresolvedCount > 0
           return (
             <Link
               key={href}
@@ -66,6 +77,11 @@ export function HRSidebar({ currentPeriodLabel }: Props) {
             >
               <Icon size={18} />
               {label}
+              {showBadge && (
+                <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                  {unresolvedCount > 99 ? '99+' : unresolvedCount}
+                </span>
+              )}
             </Link>
           )
         })}

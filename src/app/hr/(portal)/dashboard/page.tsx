@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ExportButton } from '@/components/hr/ExportButton'
 import { minutesToHours, minutesToHoursLabel } from '@/lib/pay-periods'
-import { Calendar, Clock, AlertTriangle, ChevronRight } from 'lucide-react'
+import { Calendar, Clock, AlertTriangle, ChevronRight, Bell, CalendarClock } from 'lucide-react'
 
 interface EmployeeHours {
   employee_id: string
@@ -23,10 +23,28 @@ interface PayPeriod {
   is_closed: boolean
 }
 
+interface PendingEvent {
+  id: string
+  employee_id: string
+  event_type: string
+  leave_hours_owed: number | null
+  details: Record<string, unknown> | null
+  created_at: string
+  employees: { full_name: string; employee_code: string } | null
+}
+
 interface DashboardData {
   current_period: PayPeriod | null
   past_periods: PayPeriod[]
   employee_hours: EmployeeHours[]
+  pending_events: PendingEvent[]
+}
+
+const EVENT_LABELS: Record<string, string> = {
+  leave_deduction_pending: 'Deducción pendiente',
+  auto_clockout: 'Cierre automático',
+  overtime_daily_warning: 'Tiempo extra diario',
+  overtime_weekly_warning: 'Tiempo extra semanal',
 }
 
 export default function DashboardPage() {
@@ -133,6 +151,55 @@ export default function DashboardPage() {
               {minutesToHours((data?.employee_hours ?? []).reduce((s, e) => s + e.total_minutes, 0))} hrs
             </span>
           </div>
+        </div>
+      )}
+
+      {/* Pending events panel */}
+      {(data?.pending_events?.length ?? 0) > 0 && (
+        <div className="bg-zinc-900 border border-amber-800/50 rounded-2xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Bell size={16} className="text-amber-400" />
+              <h3 className="text-white font-semibold">Alertas pendientes</h3>
+              <span className="bg-amber-500 text-white text-xs font-bold rounded-full px-2 py-0.5 ml-1">
+                {data!.pending_events.length}
+              </span>
+            </div>
+            <Link href="/hr/actividad" className="text-sm text-zinc-400 hover:text-white transition-colors">
+              Ver todas →
+            </Link>
+          </div>
+          <div className="divide-y divide-zinc-800">
+            {data!.pending_events.slice(0, 5).map(event => (
+              <div key={event.id} className="flex items-center gap-3 px-5 py-3.5">
+                {event.event_type === 'leave_deduction_pending'
+                  ? <CalendarClock size={15} className="text-amber-400 shrink-0" />
+                  : <AlertTriangle size={15} className="text-orange-400 shrink-0" />
+                }
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-zinc-300 text-sm font-medium">{event.employees?.full_name ?? '—'}</span>
+                    <span className="text-xs bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-full">
+                      {EVENT_LABELS[event.event_type] ?? event.event_type}
+                    </span>
+                  </div>
+                  {event.event_type === 'leave_deduction_pending' && event.leave_hours_owed && (
+                    <p className="text-zinc-500 text-xs mt-0.5">Adeuda {event.leave_hours_owed}h de licencia — {String(event.details?.work_date ?? '')}</p>
+                  )}
+                </div>
+                <span className="text-zinc-600 text-xs shrink-0">
+                  {new Date(event.created_at).toLocaleDateString('es-PR')}
+                </span>
+              </div>
+            ))}
+          </div>
+          {data!.pending_events.length > 5 && (
+            <div className="px-5 py-3 bg-zinc-800/50 border-t border-zinc-700 text-center">
+              <Link href="/hr/actividad" className="text-zinc-400 text-sm hover:text-white transition-colors">
+                Ver {data!.pending_events.length - 5} más en Actividad →
+              </Link>
+            </div>
+          )}
         </div>
       )}
 

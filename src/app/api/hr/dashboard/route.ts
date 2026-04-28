@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { requireHR } from '@/lib/require-hr'
+import { creditedMinutes, type PayType } from '@/lib/pay-type-rules'
 
 export async function GET(request: NextRequest) {
   const auth = await requireHR()
@@ -103,13 +104,22 @@ export async function GET(request: NextRequest) {
   const employee_hours = Array.from(employeeMap.values())
     .map(e => ({
       ...e,
-      total_minutes: e.pay_type === 'exempt' ? e.uniqueDates.size * 480 : e.total_minutes,
+      total_minutes: creditedMinutes(e.pay_type as PayType, e.uniqueDates.size, e.total_minutes),
     }))
     .sort((a, b) => a.full_name.localeCompare(b.full_name))
+
+  // Fetch recent unresolved events for dashboard warnings panel
+  const { data: pendingEvents } = await supabase
+    .from('employee_events')
+    .select('id, employee_id, event_type, leave_hours_owed, details, created_at, employees(full_name, employee_code)')
+    .eq('resolved', false)
+    .order('created_at', { ascending: false })
+    .limit(20)
 
   return NextResponse.json({
     current_period: currentPeriod ?? null,
     past_periods: pastPeriods || [],
     employee_hours,
+    pending_events: pendingEvents || [],
   })
 }

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { CheckCircle2, Copy } from 'lucide-react'
 import { assignLaw, LEY_NUEVA_CUTOFF, type ApplicableLaw } from '@/lib/leave-accrual'
+import { type PayType } from '@/lib/pay-type-rules'
 
 interface Props {
   open: boolean
@@ -21,7 +22,7 @@ export function AddEmployeeModal({ open, onClose, onAdded }: Props) {
   const [lawOverride, setLawOverride] = useState<'auto' | ApplicableLaw>('auto')
   const [initialVacation, setInitialVacation] = useState('')
   const [initialSick, setInitialSick] = useState('')
-  const [payType, setPayType] = useState<'regular' | 'exempt'>('regular')
+  const [payType, setPayType] = useState<PayType>('regular')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [created, setCreated] = useState<{ employee_code: string; full_name: string } | null>(null)
@@ -142,31 +143,34 @@ export function AddEmployeeModal({ open, onClose, onAdded }: Props) {
             <div>
               <label className="text-sm text-zinc-400 block mb-2">Tipo de pago</label>
               <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPayType('regular')}
-                  className={`py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
-                    payType === 'regular'
-                      ? 'bg-zinc-700 border-zinc-500 text-white'
-                      : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-600'
-                  }`}
-                >
-                  Regular
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPayType('exempt')}
-                  className={`py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
-                    payType === 'exempt'
-                      ? 'bg-blue-900/40 border-blue-600 text-blue-300'
-                      : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-600'
-                  }`}
-                >
-                  Exento
-                </button>
+                {([
+                  { value: 'regular',           label: 'Regular',          desc: 'Pago por hora, jornada de 8h' },
+                  { value: 'exempt',             label: 'Exento',           desc: '8h acreditadas por día, asalariado' },
+                  { value: 'professor_exempt',   label: 'Prof. Exento',     desc: '11h acreditadas por día (T1 + T2)' },
+                  { value: 'professor_regular',  label: 'Prof. Regular',    desc: 'Pago por hora, máx 5.5h/día' },
+                ] as { value: PayType; label: string; desc: string }[]).map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setPayType(opt.value)}
+                    className={`py-2 px-3 rounded-lg text-sm font-medium border text-left transition-colors ${
+                      payType === opt.value
+                        ? 'bg-blue-900/40 border-blue-600 text-blue-300'
+                        : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-600'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
-              {payType === 'exempt' && (
-                <p className="text-zinc-500 text-xs mt-1.5">Empleado asalariado exento — se acreditan 8 horas por día trabajado</p>
+              {payType !== 'regular' && (
+                <p className="text-zinc-500 text-xs mt-1.5">
+                  {{
+                    exempt: 'Asalariado exento — acredita 8h/día, descuento de licencia si trabaja < 6.5h',
+                    professor_exempt: 'Hace T1 (8am–1:40pm) + T2 (4:30pm–10:10pm) — acredita 11h/día trabajado',
+                    professor_regular: 'Por hora — máx 5.5h/día, 22h/semana',
+                  }[payType]}
+                </p>
               )}
             </div>
 

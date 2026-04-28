@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import jwt from 'jsonwebtoken'
+import {
+  type PayType,
+  DEDUCTION_THRESHOLD_MINUTES,
+  DAILY_MAX_MINUTES,
+  WEEKLY_MAX_MINUTES,
+} from '@/lib/pay-type-rules'
 
 interface KioskToken {
   sub: string
@@ -35,16 +41,18 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServiceClient()
 
-    // Verify employee still active
+    // Verify employee still active + fetch pay_type
     const { data: employee } = await supabase
       .from('employees')
-      .select('id, full_name, is_active')
+      .select('id, full_name, is_active, pay_type')
       .eq('id', payload.sub)
       .single()
 
     if (!employee?.is_active) {
       return NextResponse.json({ error: 'Empleado inactivo' }, { status: 403 })
     }
+
+    const payType = (employee.pay_type ?? 'regular') as PayType
 
     // Enforce sequence - check last punch
     const { data: lastPunch } = await supabase
@@ -126,7 +134,7 @@ export async function POST(request: NextRequest) {
       // CLOCK_OUT: close the open session
       const { data: openSession } = await supabase
         .from('work_sessions')
-        .select('id, clock_in_punch_id, created_at')
+        .select('id, clock_in_punch_id, created_at, work_date')
         .eq('employee_id', payload.sub)
         .is('clock_out_punch_id', null)
         .order('created_at', { ascending: false })
@@ -153,6 +161,102 @@ export async function POST(request: NextRequest) {
             updated_at: now.toISOString(),
           })
           .eq('id', openSession.id)
+
+        // ── Post-clockout compliance checks (non-blocking) ────────────────────
+        try {
+          const sessionDate = openSession.work_date as string
+
+          // Sum all completed sessions for this employee on this work date
+          const { data: daySessions } = await supabase
+            .from('work_sessions')
+            .select('minutes_worked')
+            .eq('employee_id', payload.sub)
+            .eq('work_date', sessionDate)
+            .not('clock_out_punch_id', 'is', null)
+
+          const dailyActualMinutes = (daySessions ?? []).reduce(
+            (sum, s) => sum + (s.minutes_worked ?? 0), 0
+          ) + Math.max(0, minutesWorked)
+
+          // Deduction check: pay types with a threshold
+          const deductionThreshold = DEDUCTION_THRESHOLD_MINUTES[payType]
+          if (deductionThreshold !== null && dailyActualMinutes < deductionThreshold) {
+            // Only create a pending deduction if there are no more open sessions today
+            const { data: openToday } = await supabase
+              .from('work_sessions')
+              .select('id')
+              .eq('employee_id', payload.sub)
+              .eq('work_date', sessionDate)
+              .is('clock_out_punch_id', null)
+
+            if (!openToday || openToday.length === 0) {
+              const hoursOwed = (deductionThreshold - dailyActualMinutes) / 60
+              await supabase.from('employee_events').insert({
+                employee_id: payload.sub,
+                event_type: 'leave_deduction_pending',
+                work_session_id: openSession.id,
+                leave_hours_owed: Math.round(hoursOwed * 100) / 100,
+                resolved: false,
+                details: {
+                  work_date: sessionDate,
+                  actual_minutes: dailyActualMinutes,
+                  threshold_minutes: deductionThreshold,
+                  pay_type: payType,
+                },
+              })
+            }
+          }
+
+          // Daily overtime warning
+          const dailyMax = DAILY_MAX_MINUTES[payType]
+          if (dailyMax !== null && dailyActualMinutes > dailyMax) {
+            await supabase.from('employee_events').insert({
+              employee_id: payload.sub,
+              event_type: 'overtime_daily_warning',
+              work_session_id: openSession.id,
+              resolved: false,
+              details: {
+                work_date: sessionDate,
+                actual_minutes: dailyActualMinutes,
+                max_minutes: dailyMax,
+                pay_type: payType,
+              },
+            })
+          }
+
+          // Weekly overtime warning (rolling 7 days)
+          const weeklyMax = WEEKLY_MAX_MINUTES[payType]
+          if (weeklyMax !== null) {
+            const weekAgo = new Date(now)
+            weekAgo.setDate(weekAgo.getDate() - 7)
+            const { data: weekSessions } = await supabase
+              .from('work_sessions')
+              .select('minutes_worked')
+              .eq('employee_id', payload.sub)
+              .gte('work_date', weekAgo.toISOString().split('T')[0])
+              .not('clock_out_punch_id', 'is', null)
+
+            const weeklyMinutes = (weekSessions ?? []).reduce(
+              (sum, s) => sum + (s.minutes_worked ?? 0), 0
+            )
+
+            if (weeklyMinutes > weeklyMax) {
+              await supabase.from('employee_events').insert({
+                employee_id: payload.sub,
+                event_type: 'overtime_weekly_warning',
+                work_session_id: openSession.id,
+                resolved: false,
+                details: {
+                  week_actual_minutes: weeklyMinutes,
+                  max_minutes: weeklyMax,
+                  pay_type: payType,
+                },
+              })
+            }
+          }
+        } catch {
+          // Compliance checks are best-effort — don't fail the punch
+        }
       }
     }
 

@@ -34,7 +34,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (body.is_active !== undefined) updates.is_active = Boolean(body.is_active)
   if (body.hire_date !== undefined) updates.hire_date = body.hire_date || null
   if (body.applicable_law !== undefined) updates.applicable_law = body.applicable_law || null
-  if (body.pay_type !== undefined) updates.pay_type = body.pay_type === 'exempt' ? 'exempt' : 'regular'
+  if (body.pay_type !== undefined) updates.pay_type = ['exempt', 'professor_exempt', 'professor_regular'].includes(body.pay_type) ? body.pay_type : 'regular'
   updates.updated_at = new Date().toISOString()
 
   const { data, error } = await supabase
