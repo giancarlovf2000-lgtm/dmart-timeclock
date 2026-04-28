@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   // Query sessions: if current period exists use date range, else show all recent
   let sessionsQuery = supabase
     .from('work_sessions')
-    .select('employee_id, minutes_worked, clock_out_punch_id, employees(id, full_name, employee_code, is_active, pay_type)')
+    .select('employee_id, minutes_worked, work_date, clock_out_punch_id, employees(id, full_name, employee_code, is_active, pay_type)')
     .not('clock_out_punch_id', 'is', null)
 
   if (currentPeriod) {
@@ -58,6 +58,7 @@ export async function GET(request: NextRequest) {
     pay_type: string
     total_minutes: number
     session_count: number
+    uniqueDates: Set<string>
     has_open_session: boolean
   }>()
 
@@ -73,12 +74,14 @@ export async function GET(request: NextRequest) {
         pay_type: emp.pay_type ?? 'regular',
         total_minutes: 0,
         session_count: 0,
+        uniqueDates: new Set(),
         has_open_session: openEmployeeIds.has(session.employee_id),
       })
     }
     const entry = employeeMap.get(session.employee_id)!
     entry.total_minutes += session.minutes_worked
     entry.session_count += 1
+    entry.uniqueDates.add(session.work_date as string)
   }
 
   for (const openSession of openSessions || []) {
@@ -92,6 +95,7 @@ export async function GET(request: NextRequest) {
       pay_type: 'regular',
       total_minutes: 0,
       session_count: 0,
+      uniqueDates: new Set(),
       has_open_session: true,
     })
   }
@@ -99,7 +103,7 @@ export async function GET(request: NextRequest) {
   const employee_hours = Array.from(employeeMap.values())
     .map(e => ({
       ...e,
-      total_minutes: e.pay_type === 'exempt' ? e.session_count * 480 : e.total_minutes,
+      total_minutes: e.pay_type === 'exempt' ? e.uniqueDates.size * 480 : e.total_minutes,
     }))
     .sort((a, b) => a.full_name.localeCompare(b.full_name))
 

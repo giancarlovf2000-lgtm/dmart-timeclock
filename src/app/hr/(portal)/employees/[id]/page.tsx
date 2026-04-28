@@ -243,8 +243,7 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
             {[...sessions].reverse().map(({ clockIn, clockOut }, idx) => {
               const inDate = new Date(clockIn.punched_at)
               const outDate = clockOut ? new Date(clockOut.punched_at) : null
-              const actualMinutes = outDate ? Math.round((outDate.getTime() - inDate.getTime()) / 60000) : null
-              const minutes = employee.pay_type === 'exempt' && actualMinutes !== null ? 480 : actualMinutes
+              const minutes = outDate ? Math.round((outDate.getTime() - inDate.getTime()) / 60000) : null
 
               return (
                 <div key={idx} className="px-5 py-4 space-y-3">
@@ -253,12 +252,7 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
                       {inDate.toLocaleDateString('es-PR', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
                     </span>
                     {minutes !== null ? (
-                      <div className="text-right">
-                        <span className="text-white font-semibold">{minutesToHoursLabel(minutes)}</span>
-                        {employee.pay_type === 'exempt' && actualMinutes !== null && actualMinutes !== 480 && (
-                          <p className="text-zinc-500 text-xs">{minutesToHoursLabel(actualMinutes)} real</p>
-                        )}
-                      </div>
+                      <span className="text-white font-semibold">{minutesToHoursLabel(minutes)}</span>
                     ) : (
                       <span className="text-amber-400 text-xs flex items-center gap-1">
                         <AlertTriangle size={12} />

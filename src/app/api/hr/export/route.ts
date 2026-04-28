@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
   const { data: sessions } = await supabase
     .from('work_sessions')
-    .select('employee_id, minutes_worked, employees(full_name, quickbooks_display_name, pay_type)')
+    .select('employee_id, minutes_worked, work_date, employees(full_name, quickbooks_display_name, pay_type)')
     .eq('pay_period_id', periodId)
     .not('clock_out_punch_id', 'is', null)
     .gt('minutes_worked', 0)
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     quickbooks_display_name: string | null
     pay_type: string
     total_minutes: number
-    session_count: number
+    uniqueDates: Set<string>
   }>()
 
   for (const session of sessions || []) {
@@ -51,18 +51,18 @@ export async function GET(request: NextRequest) {
         quickbooks_display_name: emp.quickbooks_display_name,
         pay_type: emp.pay_type ?? 'regular',
         total_minutes: 0,
-        session_count: 0,
+        uniqueDates: new Set(),
       })
     }
     const entry = employeeMap.get(session.employee_id)!
     entry.total_minutes += session.minutes_worked
-    entry.session_count += 1
+    entry.uniqueDates.add(session.work_date as string)
   }
 
-  // For exempt employees substitute actual minutes with 8h × session count
+  // Exempt employees: 8h per unique work date (not per session)
   const employees = Array.from(employeeMap.values()).map(e => ({
     ...e,
-    total_minutes: e.pay_type === 'exempt' ? e.session_count * 480 : e.total_minutes,
+    total_minutes: e.pay_type === 'exempt' ? e.uniqueDates.size * 480 : e.total_minutes,
   }))
 
   const csv = buildQuickBooksCSV(employees, period)

@@ -40,13 +40,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .not('clock_out_punch_id', 'is', null)
     .order('work_date', { ascending: true })
 
-  // Aggregate minutes and session count by calendar month
+  // Aggregate minutes and unique work dates by calendar month
   const monthMinutesMap = new Map<string, number>()
-  const monthSessionMap = new Map<string, number>()
+  const monthUniqueDatesMap = new Map<string, Set<string>>()
   for (const s of sessions ?? []) {
     const key = (s.work_date as string).slice(0, 7)
     monthMinutesMap.set(key, (monthMinutesMap.get(key) ?? 0) + s.minutes_worked)
-    monthSessionMap.set(key, (monthSessionMap.get(key) ?? 0) + 1)
+    if (!monthUniqueDatesMap.has(key)) monthUniqueDatesMap.set(key, new Set())
+    monthUniqueDatesMap.get(key)!.add(s.work_date as string)
   }
 
   const today = new Date()
@@ -64,9 +65,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const monthResults = months.map(monthYear => {
     const key = monthYear.toISOString().slice(0, 7)
-    // Exempt employees get 8h (480 min) per completed session credited for accrual
+    // Exempt employees get 8h (480 min) per unique work date credited for accrual
     const minutesWorked = isExempt
-      ? (monthSessionMap.get(key) ?? 0) * 480
+      ? (monthUniqueDatesMap.get(key)?.size ?? 0) * 480
       : (monthMinutesMap.get(key) ?? 0)
     const isCurrentMonth = monthYear.getTime() === currentMonthStart.getTime()
 

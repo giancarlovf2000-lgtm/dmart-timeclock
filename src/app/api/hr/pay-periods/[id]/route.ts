@@ -25,7 +25,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .not('clock_out_punch_id', 'is', null)
 
   // Aggregate by employee
-  const employeeMap = new Map<string, { employee_id: string; full_name: string; employee_code: string; pay_type: string; total_minutes: number; session_count: number }>()
+  const employeeMap = new Map<string, { employee_id: string; full_name: string; employee_code: string; pay_type: string; total_minutes: number; session_count: number; uniqueDates: Set<string> }>()
 
   for (const session of sessions || []) {
     const emp = session.employees as unknown as { full_name: string; employee_code: string; pay_type: string } | null
@@ -39,18 +39,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         pay_type: emp.pay_type ?? 'regular',
         total_minutes: 0,
         session_count: 0,
+        uniqueDates: new Set(),
       })
     }
     const entry = employeeMap.get(key)!
     entry.total_minutes += session.minutes_worked
     entry.session_count += 1
+    entry.uniqueDates.add(session.work_date as string)
   }
 
-  // For exempt employees replace actual minutes with 8h × completed sessions
+  // Exempt employees: 8h per unique work date (not per session)
   const employees = Array.from(employeeMap.values())
     .map(e => ({
       ...e,
-      total_minutes: e.pay_type === 'exempt' ? e.session_count * 480 : e.total_minutes,
+      total_minutes: e.pay_type === 'exempt' ? e.uniqueDates.size * 480 : e.total_minutes,
     }))
     .sort((a, b) => a.full_name.localeCompare(b.full_name))
 
