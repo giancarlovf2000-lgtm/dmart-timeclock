@@ -55,12 +55,16 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   const { id } = await params
   const supabase = createServiceClient()
 
-  // Soft delete - deactivate only
-  const { error } = await supabase
-    .from('employees')
-    .update({ is_active: false, updated_at: new Date().toISOString() })
-    .eq('id', id)
+  // Only allow permanent deletion of inactive employees
+  const { data: emp } = await supabase.from('employees').select('is_active').eq('id', id).single()
+  if (!emp) return NextResponse.json({ error: 'Empleado no encontrado' }, { status: 404 })
+  if (emp.is_active) return NextResponse.json({ error: 'Solo se pueden eliminar empleados inactivos' }, { status: 409 })
 
+  // Delete dependent records first to respect FK constraints
+  await supabase.from('work_sessions').delete().eq('employee_id', id)
+  await supabase.from('punch_records').delete().eq('employee_id', id)
+
+  const { error } = await supabase.from('employees').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true })
 }

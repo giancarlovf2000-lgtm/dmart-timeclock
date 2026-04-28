@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { AddEmployeeModal } from '@/components/hr/AddEmployeeModal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { UserPlus, Search, ChevronRight, ToggleLeft, ToggleRight } from 'lucide-react'
+import { UserPlus, Search, ChevronRight, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react'
 
 interface Employee {
   id: string
@@ -22,6 +22,8 @@ export default function EmployeesPage() {
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('active')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [confirmId, setConfirmId] = useState<string | null>(null)
 
   async function fetchEmployees() {
     const res = await fetch('/api/hr/employees')
@@ -31,6 +33,16 @@ export default function EmployeesPage() {
   }
 
   useEffect(() => { fetchEmployees() }, [])
+
+  async function deleteEmployee(id: string) {
+    setDeletingId(id)
+    const res = await fetch(`/api/hr/employees/${id}`, { method: 'DELETE' })
+    if (res.ok) {
+      setEmployees(prev => prev.filter(e => e.id !== id))
+    }
+    setDeletingId(null)
+    setConfirmId(null)
+  }
 
   async function toggleActive(emp: Employee) {
     const res = await fetch(`/api/hr/employees/${emp.id}`, {
@@ -118,8 +130,37 @@ export default function EmployeesPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {!emp.is_active && (
+                    confirmId === emp.id ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-zinc-400">¿Eliminar?</span>
+                        <button
+                          onClick={() => deleteEmployee(emp.id)}
+                          disabled={deletingId === emp.id}
+                          className="text-xs px-2 py-1 rounded bg-red-700 hover:bg-red-600 text-white disabled:opacity-50"
+                        >
+                          {deletingId === emp.id ? '...' : 'Sí'}
+                        </button>
+                        <button
+                          onClick={() => setConfirmId(null)}
+                          className="text-xs px-2 py-1 rounded bg-zinc-700 hover:bg-zinc-600 text-white"
+                        >
+                          No
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmId(emp.id)}
+                        title="Eliminar permanentemente"
+                        className="text-zinc-600 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )
+                  )}
+
                   <button
-                    onClick={() => toggleActive(emp)}
+                    onClick={() => { setConfirmId(null); toggleActive(emp) }}
                     title={emp.is_active ? 'Desactivar' : 'Activar'}
                     className="text-zinc-500 hover:text-white transition-colors"
                   >
